@@ -9,7 +9,11 @@ lazy val root = (project in file("."))
   .settings(
     name := "vm-translator",
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.7.0",
-    libraryDependencies += scalaTest % Test
+    libraryDependencies += scalaTest % Test,
+
+    // Build
+    assembly / mainClass := Some("net.eldelto.nand2tetris.vmtranslator.Main"),
+    assembly / assemblyJarName := "vm-translator.jar"
   )
 
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.

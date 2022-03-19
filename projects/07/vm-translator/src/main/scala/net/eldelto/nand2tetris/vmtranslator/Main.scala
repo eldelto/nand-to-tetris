@@ -1,18 +1,30 @@
 package net.eldelto.nand2tetris.vmtranslator
 
-import cats.syntax.traverse._
+import scala.io._
+import java.nio.file._
+import collection.JavaConverters._
 
-@main def main(): Unit = {
-  val instructions = List("push constant 0", "push constant 2", "add")
-  translate(Stream.from(instructions)) match {
-    case Right(asm)  => asm.foreach(println(_))
-    case Left(error) => println("Error: " + error)
-  }
+def getAsmPath(inputFile: Path): Path = {
+  val outFilename = inputFile.getFileName.toString.replace(".vm", ".hack")
+  inputFile.getParent.resolve(outFilename)
 }
 
-def translate(
-    vmInstructions: Stream[String]
-): Either[ParsingError, Stream[String]] = vmInstructions
-  .map(Parser.parse)
-  .sequence
-  .map(_.flatMap(_.toAssembly()))
+@main def main(filename: String): Unit = {
+  val inputPath = Path.of(filename)
+  val source = Source.fromFile(filename)
+
+  try {
+    val instructions = Stream.from(source.getLines)
+    Translator.translate(Stream.from(instructions)) match {
+      case Left(error) => println("Error: " + error)
+      case Right(asm) =>
+        val outputPath = getAsmPath(inputPath)
+        Files.write(
+          outputPath,
+          asm.asJava
+        )
+    }
+  } finally {
+    source.close()
+  }
+}

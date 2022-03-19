@@ -4,41 +4,44 @@ sealed trait Instruction {
   def toAssembly(): List[String]
 }
 
+private def increaseSP(): List[String] = List(
+  "@SP",
+  "M=M+1"
+)
+
+private def decreaseSP(): List[String] = List(
+  "@SP",
+  "M=M-1"
+)
+
+case class Comment() extends Instruction {
+  override def toAssembly(): List[String] = List()
+}
+
 case class PushConstant(val x: Int) extends Instruction {
-  def toAssembly(): List[String] = List(
+  override def toAssembly(): List[String] = List(
     s"// push $x",
     s"@$x",
     "D=A",
     "@SP",
     "A=M",
-    "M=D",
-    "@SP",
-    "M=M+1"
-  )
+    "M=D"
+  ) ++ increaseSP()
 }
 
 case class Pop() extends Instruction {
-  def toAssembly(): List[String] = List(
+  override def toAssembly(): List[String] = List(
     "// pop",
     "@SP",
     "A=M",
-    "D=M",
-    "@SP",
-    "M=M-1"
-  )
+    "D=M"
+  ) ++ decreaseSP()
 }
 
 case class Add() extends Instruction {
-  def toAssembly(): List[String] = List(
-    "// add",
-    "@SP",
-    "A=M",
-    "D=M",
-    "@SP",
-    "M=M-1",
-    "A=M",
-    "M=M+D"
-  )
+  override def toAssembly(): List[String] = List("// add")
+    ++ decreaseSP() ++
+    List("A=M", "D=M", "@SP", "A=M-1", "D=M+D", "M=D")
 }
 
 /*

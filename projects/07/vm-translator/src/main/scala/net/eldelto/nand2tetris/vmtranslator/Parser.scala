@@ -34,7 +34,12 @@ object Parser {
   }
 
   def parse(rawInstruction: String): Either[ParsingError, Instruction] = {
-    val tokens = rawInstruction.split(" ")
+    val trimmedInstruction = rawInstruction.trim
+    if (trimmedInstruction.startsWith("//")) {
+      return Right(Comment())
+    }
+
+    val tokens = trimmedInstruction.split(" ")
     tokens(0) match {
       case "push" => dispatchPush(tokens)
       case "pop"  => dispatchPop(tokens)
