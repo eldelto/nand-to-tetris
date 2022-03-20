@@ -4,7 +4,9 @@ import scala.util.Either
 
 case class ParsingError(val instruction: String)
 
-object Parser {
+class Parser() {
+  private var index: Long = 0;
+
   private def dispatchPush(
       tokens: Array[String]
   ): Either[ParsingError, Instruction] = {
@@ -28,7 +30,15 @@ object Parser {
     val operation = tokens(0)
 
     operation match {
+      case "not" => Right(Not())
+      case "neg" => Right(Negate())
       case "add" => Right(Add())
+      case "sub" => Right(Substract())
+      case "and" => Right(And())
+      case "or"  => Right(Or())
+      case "eq"  => Right(Equals(index))
+      case "lt"  => Right(LessThan(index))
+      case "gt"  => Right(GreaterThan(index))
       case _     => Left(ParsingError(tokens.mkString(" ")))
     }
   }
@@ -40,10 +50,13 @@ object Parser {
     }
 
     val tokens = trimmedInstruction.split(" ")
-    tokens(0) match {
+    val instruction = tokens(0) match {
       case "push" => dispatchPush(tokens)
       case "pop"  => dispatchPop(tokens)
       case _      => dispatchOperation(tokens)
     }
+
+    index += 1
+    instruction
   }
 }

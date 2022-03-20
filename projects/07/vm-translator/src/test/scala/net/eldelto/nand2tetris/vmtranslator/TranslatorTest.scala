@@ -12,7 +12,7 @@ class TranslatorSpec
     with EitherValues
     with TestResources {
   "The translator" should "properly translate the given files" in {
-    val files = List("SimpleAdd")
+    val files = List("SimpleAdd", "StackTest")
 
     files.foreach { filename =>
       val vmInstructions = readResource(filename + ".vm").split("\n")
