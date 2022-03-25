@@ -21,6 +21,7 @@ class Parser() {
       case "that"     => Right(PushMemorySegment(MemorySegment.THAT, offset))
       case "static"   => Right(PushMemorySegment(MemorySegment.Static, offset))
       case "temp"     => Right(PushMemorySegment(MemorySegment.Temp, offset))
+      case "pointer"  => Right(PushMemorySegment(MemorySegment.Pointer, offset))
       case _          => Left(ParsingError(tokens.mkString(" ")))
     }
   }
@@ -38,6 +39,7 @@ class Parser() {
       case "that"     => Right(PopMemorySegment(MemorySegment.THAT, offset))
       case "static"   => Right(PopMemorySegment(MemorySegment.Static, offset))
       case "temp"     => Right(PopMemorySegment(MemorySegment.Temp, offset))
+      case "pointer"  => Right(PopMemorySegment(MemorySegment.Pointer, offset))
       case _          => Left(ParsingError(tokens.mkString(" ")))
     }
   }

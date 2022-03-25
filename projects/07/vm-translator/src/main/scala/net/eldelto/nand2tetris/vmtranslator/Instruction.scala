@@ -7,6 +7,7 @@ enum MemorySegment {
   case THAT
   case Static
   case Temp
+  case Pointer
 }
 
 enum BinaryOperation {
@@ -61,22 +62,13 @@ private def segmentAddressToR13(
 ): List[String] = {
   val addressInD = segment match {
     case MemorySegment.Static =>
-      List(
-        "@STATIC_" + offset,
-        "D=A"
-      )
+      List("@STATIC_" + offset, "D=A")
     case MemorySegment.Temp =>
-      List(
-        "@R" + (offset + 5),
-        "D=A"
-      )
+      List("@R" + (offset + 5), "D=A")
+    case MemorySegment.Pointer =>
+      List(if (offset == 0) "@THIS" else "@THAT", "D=A")
     case _ =>
-      List(
-        "@" + segment,
-        "D=M",
-        "@" + offset,
-        "D=A+D"
-      )
+      List("@" + segment, "D=M", "@" + offset, "D=A+D")
   }
 
   List(

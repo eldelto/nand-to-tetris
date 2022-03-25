@@ -13,7 +13,7 @@ class TranslatorSpec
     with TestResources {
   "The translator" should "properly translate the given files" in {
     val files =
-      List("SimpleAdd", "StackTest", "BasicTest", "StaticTest")
+      List("SimpleAdd", "StackTest", "BasicTest", "StaticTest", "PointerTest")
 
     files.foreach { filename =>
       val vmInstructions = readResource(filename + ".vm").split("\n")
