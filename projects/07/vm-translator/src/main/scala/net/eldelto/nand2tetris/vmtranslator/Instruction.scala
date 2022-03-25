@@ -40,7 +40,17 @@ inline private def decreaseSP(): List[String] = List(
   "M=M-1"
 )
 
-private def storeDInR13(): List[String] = List(
+inline private def storePointer() = List(
+  "A=M",
+  "M=D"
+)
+
+inline private def loadPointer() = List(
+  "A=M",
+  "D=M"
+)
+
+inline private def storeDInR13() = List(
   "@R13",
   "M=D"
 )
@@ -67,38 +77,45 @@ private def segmentAddressToR13(
         "@" + offset,
         "D=A+D"
       )
-
   }
-  val storeInR13 = List(
-  )
+
+  List(
+    addressInD,
+    storeDInR13()
+  ).flatten
 }
 
-inline private def unaryOperation(operations: List[String]): List[String] =
-  List("@SP", "A=M-1", "D=M") ++ operations ++ List("M=D")
+inline private def unaryOperation(operations: List[String]) = List(
+  List("@SP", "A=M-1", "D=M"),
+  operations,
+  List("M=D")
+).flatten
 
-inline private def binaryOperation(operation: BinaryOperation): List[String] =
-  decreaseSP() ++
-    List("A=M", "D=M", "@SP", "A=M-1", s"D=$operation", "M=D")
+inline private def binaryOperation(operation: BinaryOperation) = List(
+  decreaseSP(),
+  loadPointer(),
+  List("@SP", "A=M-1", s"D=$operation", "M=D")
+).flatten
 
 inline private def comparison(
     comparison: JumpComparison,
     index: Long
-): List[String] =
-  decreaseSP() ++
-    List(
-      "A=M",
-      "D=M",
-      "@SP",
-      "A=M-1",
-      "D=M-D",
-      "M=-1",
-      s"@CONTINUE_$index",
-      s"D;$comparison",
-      "@SP",
-      "A=M-1",
-      "M=0",
-      s"(CONTINUE_$index)"
-    )
+) = List(
+  decreaseSP(),
+  loadPointer(),
+  List(
+    "@SP",
+    "A=M-1",
+    "D=M-D",
+    "M=-1",
+    s"@CONTINUE_$index",
+    s"D;$comparison",
+    "@SP",
+    "A=M-1",
+    "M=0",
+    s"(CONTINUE_$index)"
+  )
+).flatten
 
 case class Comment() extends Instruction {
   override val toAssembly: List[String] = List()
@@ -106,43 +123,36 @@ case class Comment() extends Instruction {
 
 case class PushConstant(val x: Int) extends Instruction {
   override val toAssembly: List[String] = List(
-    s"// push $x",
-    s"@$x",
-    "D=A",
-    "@SP",
-    "A=M",
-    "M=D"
-  ) ++ increaseSP()
+    List("// push " + x, "@" + x, "D=A", "@SP"),
+    storePointer(),
+    increaseSP()
+  ).flatten
 }
 
 case class PopMemorySegment(val segment: MemorySegment, offset: Int)
     extends Instruction {
-  override val toAssembly: List[String] = List(s"// pop $segment")
-    ++ segmentAddressToR13(segment, offset)
-    ++ decreaseSP()
-    ++ List(
-      "@SP",
-      "A=M",
-      "D=M",
-      "@R13",
-      "A=M",
-      "M=D"
-    )
+  override val toAssembly: List[String] = List(
+    List("// pop " + segment),
+    segmentAddressToR13(segment, offset),
+    decreaseSP(),
+    List("@SP"),
+    loadPointer(),
+    List("@R13"),
+    storePointer()
+  ).flatten
 }
 
 case class PushMemorySegment(val segment: MemorySegment, offset: Int)
     extends Instruction {
-  override val toAssembly: List[String] = List(s"// pop $segment")
-    ++ segmentAddressToR13(segment, offset)
-    ++ List(
-      "@R13",
-      "A=M",
-      "D=M",
-      "@SP",
-      "A=M",
-      "M=D"
-    )
-    ++ increaseSP()
+  override val toAssembly: List[String] = List(
+    List("// pop " + segment),
+    segmentAddressToR13(segment, offset),
+    List("@R13"),
+    loadPointer(),
+    List("@SP"),
+    storePointer(),
+    increaseSP()
+  ).flatten
 }
 
 case class Not() extends Instruction {
