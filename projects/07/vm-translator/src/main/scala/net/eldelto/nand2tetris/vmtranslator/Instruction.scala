@@ -1,5 +1,14 @@
 package net.eldelto.nand2tetris.vmtranslator
 
+enum MemorySegment {
+  case LCL
+  case ARG
+  case THIS
+  case THAT
+  case Static
+  case Temp
+}
+
 enum BinaryOperation {
   case `M+D`
   case `M-D`
@@ -30,6 +39,39 @@ inline private def decreaseSP(): List[String] = List(
   "@SP",
   "M=M-1"
 )
+
+private def storeDInR13(): List[String] = List(
+  "@R13",
+  "M=D"
+)
+
+private def segmentAddressToR13(
+    segment: MemorySegment,
+    offset: Int
+): List[String] = {
+  val addressInD = segment match {
+    case MemorySegment.Static =>
+      List(
+        "@STATIC_" + offset,
+        "D=A"
+      )
+    case MemorySegment.Temp =>
+      List(
+        "@R" + (offset + 5),
+        "D=A"
+      )
+    case _ =>
+      List(
+        "@" + segment,
+        "D=M",
+        "@" + offset,
+        "D=A+D"
+      )
+
+  }
+  val storeInR13 = List(
+  )
+}
 
 inline private def unaryOperation(operations: List[String]): List[String] =
   List("@SP", "A=M-1", "D=M") ++ operations ++ List("M=D")
@@ -73,13 +115,34 @@ case class PushConstant(val x: Int) extends Instruction {
   ) ++ increaseSP()
 }
 
-case class Pop() extends Instruction {
-  override val toAssembly: List[String] = List(
-    "// pop",
-    "@SP",
-    "A=M",
-    "D=M"
-  ) ++ decreaseSP()
+case class PopMemorySegment(val segment: MemorySegment, offset: Int)
+    extends Instruction {
+  override val toAssembly: List[String] = List(s"// pop $segment")
+    ++ segmentAddressToR13(segment, offset)
+    ++ decreaseSP()
+    ++ List(
+      "@SP",
+      "A=M",
+      "D=M",
+      "@R13",
+      "A=M",
+      "M=D"
+    )
+}
+
+case class PushMemorySegment(val segment: MemorySegment, offset: Int)
+    extends Instruction {
+  override val toAssembly: List[String] = List(s"// pop $segment")
+    ++ segmentAddressToR13(segment, offset)
+    ++ List(
+      "@R13",
+      "A=M",
+      "D=M",
+      "@SP",
+      "A=M",
+      "M=D"
+    )
+    ++ increaseSP()
 }
 
 case class Not() extends Instruction {

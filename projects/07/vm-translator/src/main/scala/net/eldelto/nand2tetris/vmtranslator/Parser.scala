@@ -11,9 +11,16 @@ class Parser() {
       tokens: Array[String]
   ): Either[ParsingError, Instruction] = {
     val memorySegment = tokens(1)
+    val offset = tokens(2).toInt
 
     memorySegment match {
-      case "constant" => Right(PushConstant(tokens(2).toInt))
+      case "constant" => Right(PushConstant(offset))
+      case "local"    => Right(PushMemorySegment(MemorySegment.LCL, offset))
+      case "argument" => Right(PushMemorySegment(MemorySegment.ARG, offset))
+      case "this"     => Right(PushMemorySegment(MemorySegment.THIS, offset))
+      case "that"     => Right(PushMemorySegment(MemorySegment.THAT, offset))
+      case "static"   => Right(PushMemorySegment(MemorySegment.Static, offset))
+      case "temp"     => Right(PushMemorySegment(MemorySegment.Temp, offset))
       case _          => Left(ParsingError(tokens.mkString(" ")))
     }
   }
@@ -21,7 +28,18 @@ class Parser() {
   private def dispatchPop(
       tokens: Array[String]
   ): Either[ParsingError, Instruction] = {
-    return Left(ParsingError(tokens.mkString(" ")))
+    val memorySegment = tokens(1)
+    val offset = tokens(2).toInt
+
+    memorySegment match {
+      case "local"    => Right(PopMemorySegment(MemorySegment.LCL, offset))
+      case "argument" => Right(PopMemorySegment(MemorySegment.ARG, offset))
+      case "this"     => Right(PopMemorySegment(MemorySegment.THIS, offset))
+      case "that"     => Right(PopMemorySegment(MemorySegment.THAT, offset))
+      case "static"   => Right(PopMemorySegment(MemorySegment.Static, offset))
+      case "temp"     => Right(PopMemorySegment(MemorySegment.Temp, offset))
+      case _          => Left(ParsingError(tokens.mkString(" ")))
+    }
   }
 
   private def dispatchOperation(
