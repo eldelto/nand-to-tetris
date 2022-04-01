@@ -203,7 +203,7 @@ case class GoTo(label: String) extends Instruction {
   override val toAssembly: List[String] = List(
     "// goto " + label,
     "@" + label,
-    ";JMP"
+    "0;JMP"
   )
 }
 

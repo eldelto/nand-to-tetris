@@ -19,7 +19,8 @@ class TranslatorSpec
         "BasicTest",
         "StaticTest",
         "PointerTest",
-        "BasicLoop"
+        "BasicLoop",
+        "FibonacciSeries"
       )
 
     files.foreach { filename =>
