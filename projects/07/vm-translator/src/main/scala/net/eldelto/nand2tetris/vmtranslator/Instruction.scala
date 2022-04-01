@@ -191,3 +191,27 @@ case class GreaterThan(index: Long) extends Instruction {
   override val toAssembly: List[String] = List("// gt")
     ++ comparison(JumpComparison.JGT, index)
 }
+
+case class Label(label: String) extends Instruction {
+  override val toAssembly: List[String] = List(
+    "// label " + label,
+    s"($label)"
+  )
+}
+
+case class GoTo(label: String) extends Instruction {
+  override val toAssembly: List[String] = List(
+    "// goto " + label,
+    "@" + label,
+    ";JMP"
+  )
+}
+
+case class IfGoTo(label: String) extends Instruction {
+  override val toAssembly: List[String] = List(
+    List("// if-goto " + label, "@SP"),
+    decreaseSP(),
+    loadPointer(),
+    List("@" + label, "D;JNE")
+  ).flatten
+}

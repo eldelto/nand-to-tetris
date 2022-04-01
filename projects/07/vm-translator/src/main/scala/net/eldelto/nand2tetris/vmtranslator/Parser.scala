@@ -44,6 +44,20 @@ class Parser() {
     }
   }
 
+  private def dispatchBranching(
+      tokens: Array[String]
+  ): Either[ParsingError, Instruction] = {
+    val instruction = tokens(0)
+    val label = tokens(1)
+
+    instruction match {
+      case "label"   => Right(Label(label))
+      case "goto"    => Right(GoTo(label))
+      case "if-goto" => Right(IfGoTo(label))
+      case _         => Left(ParsingError(tokens.mkString(" ")))
+    }
+  }
+
   private def dispatchOperation(
       tokens: Array[String]
   ): Either[ParsingError, Instruction] = {
@@ -69,11 +83,13 @@ class Parser() {
       return Right(Comment())
     }
 
-    val tokens = trimmedInstruction.split(" ")
+    val tokens = trimmedInstruction.split(" ").map(_.trim())
     val instruction = tokens(0) match {
       case "push" => dispatchPush(tokens)
       case "pop"  => dispatchPop(tokens)
-      case _      => dispatchOperation(tokens)
+      case _ =>
+        dispatchOperation(tokens)
+          .orElse(dispatchBranching(tokens))
     }
 
     index += 1
