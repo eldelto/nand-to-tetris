@@ -103,7 +103,7 @@ class Parser() {
       return Right(Comment())
     }
 
-    val tokens = trimmedInstruction.split(" ").map(_.trim())
+    val tokens = trimmedInstruction.split("\\s").map(_.trim())
     val instruction = tokens(0) match {
       case "push" => dispatchPush(tokens)
       case "pop"  => dispatchPop(tokens)

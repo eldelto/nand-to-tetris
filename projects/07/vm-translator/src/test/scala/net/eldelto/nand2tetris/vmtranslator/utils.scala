@@ -4,10 +4,7 @@ import java.nio.file._
 import scala.io.Source
 
 trait TestResources {
-  def resourcePath(): Path = Paths.get(getClass.getResource("/").toURI)
+  def resourcePath: Path = Paths.get(getClass.getResource("/").toURI)
 
-  def readResource(name: String): String = {
-    val path = resourcePath().resolve(name)
-    Files.readString(path)
-  }
+  def resourcePath(name: String): Path = resourcePath.resolve(name)
 }

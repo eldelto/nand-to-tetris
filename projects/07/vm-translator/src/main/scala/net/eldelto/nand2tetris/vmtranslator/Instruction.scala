@@ -82,6 +82,11 @@ inline private def pushStack() = List(
   increaseSP()
 ).flatten
 
+inline private def initLocalSegment(variableCount: Int) =
+  List
+    .fill(variableCount)(List("@0") ++ pushStack())
+    .flatten
+
 inline private def pushSegmentPointer(segment: MemorySegment) = List(
   List("@" + segment, "D=M"),
   pushStack()
@@ -251,9 +256,12 @@ case class IfGoTo(label: String) extends Instruction {
 case class Function(functionName: String, localVariableCount: Int)
     extends Instruction {
   override val toAssembly: List[String] = List(
-    s"// function $functionName $localVariableCount",
-    s"($functionName)"
-  )
+    List(
+      s"// function $functionName $localVariableCount",
+      s"($functionName)"
+    ),
+    initLocalSegment(localVariableCount)
+  ).flatten
 }
 
 case class Call(functionName: String, argumentCount: Int, index: Long)
@@ -261,9 +269,8 @@ case class Call(functionName: String, argumentCount: Int, index: Long)
   override val toAssembly: List[String] = List(
     List(
       s"// call $functionName $argumentCount",
-      "(" + returnLabel(functionName, index) + ")",
       "@" + returnLabel(functionName, index),
-      "D=M"
+      "D=A"
     ),
     pushStack(),
     pushSegmentPointer(MemorySegment.LCL),
@@ -281,8 +288,9 @@ case class Call(functionName: String, argumentCount: Int, index: Long)
       "D=M",
       "@" + MemorySegment.LCL, // TODO: storeValue(MemorySegment.LCL)?
       "M=D",
-      "@functionName",
-      "0;JMP"
+      "@" + functionName,
+      "0;JMP",
+      "(" + returnLabel(functionName, index) + ")"
     )
   ).flatten
 

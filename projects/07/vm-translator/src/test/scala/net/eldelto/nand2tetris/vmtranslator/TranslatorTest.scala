@@ -25,15 +25,25 @@ class TranslatorSpec
       )
 
     files.foreach { filename =>
-      val vmInstructions = readResource(filename + ".vm").split("\n")
-      val result = Translator.translate(Stream.from(vmInstructions))
+      val path = resourcePath(filename + ".vm")
+      val result = Translator.translate(path)
 
-      result.right.value shouldBe a[Stream[String]]
+      result.right.value shouldBe a[Unit]
+    }
+  }
 
-      Files.write(
-        resourcePath().resolve(filename + ".asm"),
-        result.getOrElse(Stream()).asJava
+  "The translator" should "properly translate the given directories" in {
+    val directories =
+      List(
+        "NestedCall",
+        "FibonacciElement"
       )
+
+    directories.foreach { directoryName =>
+      val path = resourcePath(directoryName)
+      val result = Translator.translate(path, true)
+
+      result.right.value shouldBe a[Unit]
     }
   }
 }
