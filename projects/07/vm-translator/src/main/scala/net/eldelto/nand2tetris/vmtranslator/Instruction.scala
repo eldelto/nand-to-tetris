@@ -56,6 +56,17 @@ inline private def storeDInR13() = List(
   "M=D"
 )
 
+inline private def popStack() = List(
+  decreaseSP(),
+  loadPointer()
+).flatten
+
+inline private def pushStack() = List(
+  List("@SP"),
+  storePointer(),
+  increaseSP()
+).flatten
+
 private def segmentAddressToR13(
     segment: MemorySegment,
     offset: Int
@@ -84,8 +95,7 @@ inline private def unaryOperation(operations: List[String]) = List(
 ).flatten
 
 inline private def binaryOperation(operation: BinaryOperation) = List(
-  decreaseSP(),
-  loadPointer(),
+  popStack(),
   List("@SP", "A=M-1", s"D=$operation", "M=D")
 ).flatten
 
@@ -93,8 +103,7 @@ inline private def comparison(
     comparison: JumpComparison,
     index: Long
 ) = List(
-  decreaseSP(),
-  loadPointer(),
+  popStack(),
   List(
     "@SP",
     "A=M-1",
@@ -115,9 +124,8 @@ case class Comment() extends Instruction {
 
 case class PushConstant(val x: Int) extends Instruction {
   override val toAssembly: List[String] = List(
-    List("// push " + x, "@" + x, "D=A", "@SP"),
-    storePointer(),
-    increaseSP()
+    List("// push " + x, "@" + x, "D=A"),
+    pushStack()
   ).flatten
 }
 
@@ -126,9 +134,7 @@ case class PopMemorySegment(val segment: MemorySegment, offset: Int)
   override val toAssembly: List[String] = List(
     List("// pop " + segment),
     segmentAddressToR13(segment, offset),
-    decreaseSP(),
-    List("@SP"),
-    loadPointer(),
+    popStack(),
     List("@R13"),
     storePointer()
   ).flatten
@@ -141,9 +147,7 @@ case class PushMemorySegment(val segment: MemorySegment, offset: Int)
     segmentAddressToR13(segment, offset),
     List("@R13"),
     loadPointer(),
-    List("@SP"),
-    storePointer(),
-    increaseSP()
+    pushStack()
   ).flatten
 }
 
@@ -210,8 +214,35 @@ case class GoTo(label: String) extends Instruction {
 case class IfGoTo(label: String) extends Instruction {
   override val toAssembly: List[String] = List(
     List("// if-goto " + label, "@SP"),
-    decreaseSP(),
-    loadPointer(),
+    popStack(),
     List("@" + label, "D;JNE")
   ).flatten
 }
+
+case class Function(functionName: String, localVariableCount: Int)
+    extends Instruction {
+  override val toAssembly: List[String] = List(
+    s"// function $functionName $localVariableCount",
+    s"($functionName)"
+  )
+}
+
+case class Call(functionName: String, argumentCount: Int) extends Instruction {
+  override val toAssembly: List[String] = List(
+    s"// call $functionName $argumentCount"
+    // TODO: Implement
+  )
+}
+
+/*
+The VM implementation view:
+When a function calls another function, I (the VM implementation) must:
+• Save the return address and the segment pointers of the calling function (except for temp which is not saved);
+• Allocate, and initialize to zero, as many local variables as needed by the called function;
+• Set the local and argument segments of the called function;
+• Transfer control to the called function.
+When a function returns, I (the VM implementation) must:
+• Clear the arguments and other junk from the stack;
+• Restore the local, argument, this and that segments of the calling function;
+• Transfer control back to the calling function, by jumping to the saved return address.
+ */

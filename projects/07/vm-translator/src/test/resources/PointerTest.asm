@@ -13,7 +13,6 @@ D=A
 M=D
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @R13
@@ -34,7 +33,6 @@ D=A
 M=D
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @R13
@@ -57,7 +55,6 @@ D=A+D
 M=D
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @R13
@@ -80,7 +77,6 @@ D=A+D
 M=D
 @SP
 M=M-1
-@SP
 A=M
 D=M
 @R13
