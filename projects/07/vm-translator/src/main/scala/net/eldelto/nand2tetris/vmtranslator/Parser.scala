@@ -47,6 +47,8 @@ class Parser() {
   private def dispatchBranching(
       tokens: Array[String]
   ): Either[ParsingError, Instruction] = {
+    if (tokens.length < 2) return Left(ParsingError(tokens.mkString(" ")))
+
     val instruction = tokens(0)
     val label = tokens(1)
 
@@ -55,6 +57,24 @@ class Parser() {
       case "goto"    => Right(GoTo(label))
       case "if-goto" => Right(IfGoTo(label))
       case _         => Left(ParsingError(tokens.mkString(" ")))
+    }
+  }
+
+  private def dispatchFunctionCall(
+      tokens: Array[String]
+  ): Either[ParsingError, Instruction] = {
+    val instruction = tokens(0)
+
+    if (instruction == "return") return Right(Return())
+    if (tokens.length < 3) return Left(ParsingError(tokens.mkString(" ")))
+
+    val functionName = tokens(1)
+    val variableCount = tokens(2).toInt
+
+    instruction match {
+      case "function" => Right(Function(functionName, variableCount))
+      case "call"     => Right(Call(functionName, variableCount, index))
+      case _          => Left(ParsingError(tokens.mkString(" ")))
     }
   }
 
@@ -90,6 +110,7 @@ class Parser() {
       case _ =>
         dispatchOperation(tokens)
           .orElse(dispatchBranching(tokens))
+          .orElse(dispatchFunctionCall(tokens))
     }
 
     index += 1

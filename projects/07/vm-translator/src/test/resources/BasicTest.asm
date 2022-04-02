@@ -15,6 +15,7 @@ D=A+D
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -45,6 +46,7 @@ D=A+D
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -59,6 +61,7 @@ D=A+D
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -81,6 +84,7 @@ D=A+D
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -111,6 +115,7 @@ D=A+D
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -125,6 +130,7 @@ D=A+D
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -145,6 +151,7 @@ D=A
 M=D
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @R13
@@ -183,6 +190,7 @@ M=M+1
 // add
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @SP
@@ -207,6 +215,7 @@ M=M+1
 // sub
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @SP
@@ -246,6 +255,7 @@ M=M+1
 // add
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @SP
@@ -255,6 +265,7 @@ M=D
 // sub
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @SP
@@ -277,6 +288,7 @@ M=M+1
 // add
 @SP
 M=M-1
+@SP
 A=M
 D=M
 @SP
