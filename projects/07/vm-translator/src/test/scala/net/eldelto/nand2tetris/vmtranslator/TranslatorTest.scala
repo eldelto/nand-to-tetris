@@ -35,8 +35,10 @@ class TranslatorSpec
   "The translator" should "properly translate the given directories" in {
     val directories =
       List(
+        "SimpleCall",
         "NestedCall",
-        "FibonacciElement"
+        "FibonacciElement",
+        "StaticsTest"
       )
 
     directories.foreach { directoryName =>

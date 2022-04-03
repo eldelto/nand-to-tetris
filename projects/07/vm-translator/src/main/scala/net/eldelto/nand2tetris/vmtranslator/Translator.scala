@@ -5,6 +5,8 @@ import cats.syntax.either._
 import java.nio.file._
 import collection.JavaConverters._
 
+case class RawInstruction(instruction: String, filename: String)
+
 object Translator {
   def translate(
       path: Path,
@@ -29,12 +31,12 @@ object Translator {
   }
 
   private def translateInstructions(
-      vmInstructions: Stream[String]
+      vmInstructions: Stream[RawInstruction]
   ): Either[ParsingError, Stream[String]] = {
     val parser = Parser()
     vmInstructions
-      .filter(!_.isBlank)
-      .map(parser.parse)
+      .filter(!_.instruction.isBlank)
+      .map(x => parser.parse(x.instruction, x.filename))
       .sequence
       .map(_.flatMap(_.toAssembly))
   }
@@ -55,5 +57,6 @@ object Translator {
       "@SP",
       "M=D"
     )
+      ++ Call("Sys.init", 0, 0).toAssembly
   )
 }

@@ -1,5 +1,17 @@
 // function SimpleFunction.test 2
 (SimpleFunction.test)
+@0
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@0
+@SP
+A=M
+M=D
+@SP
+M=M+1
 // pop LCL
 @LCL
 D=M

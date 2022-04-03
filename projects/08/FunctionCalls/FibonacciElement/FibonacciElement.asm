@@ -2,6 +2,55 @@
 D=A
 @SP
 M=D
+// call Sys.init 0
+@Sys.init_return_0
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@LCL
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@ARG
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THAT
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+D=M
+@5
+D=D-A
+@ARG
+M=D
+@SP
+D=M
+@LCL
+M=D
+@Sys.init
+0;JMP
+(Sys.init_return_0)
 // function Main.fibonacci 0
 (Main.fibonacci)
 // pop ARG
@@ -163,9 +212,8 @@ A=M-1
 D=M-D
 M=D
 // call Main.fibonacci 1
-(Main.fibonacci_return_13)
 @Main.fibonacci_return_13
-D=M
+D=A
 @SP
 A=M
 M=D
@@ -209,8 +257,9 @@ M=D
 D=M
 @LCL
 M=D
-@functionName
+@Main.fibonacci
 0;JMP
+(Main.fibonacci_return_13)
 // pop ARG
 @ARG
 D=M
@@ -245,9 +294,8 @@ A=M-1
 D=M-D
 M=D
 // call Main.fibonacci 1
-(Main.fibonacci_return_17)
 @Main.fibonacci_return_17
-D=M
+D=A
 @SP
 A=M
 M=D
@@ -291,8 +339,9 @@ M=D
 D=M
 @LCL
 M=D
-@functionName
+@Main.fibonacci
 0;JMP
+(Main.fibonacci_return_17)
 // add
 @SP
 M=M-1
@@ -369,9 +418,8 @@ M=D
 @SP
 M=M+1
 // call Main.fibonacci 1
-(Main.fibonacci_return_22)
 @Main.fibonacci_return_22
-D=M
+D=A
 @SP
 A=M
 M=D
@@ -415,8 +463,9 @@ M=D
 D=M
 @LCL
 M=D
-@functionName
+@Main.fibonacci
 0;JMP
+(Main.fibonacci_return_22)
 // label WHILE
 (WHILE)
 // goto WHILE

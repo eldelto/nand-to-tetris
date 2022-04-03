@@ -84,7 +84,12 @@ inline private def pushStack() = List(
 
 inline private def initLocalSegment(variableCount: Int) =
   List
-    .fill(variableCount)(List("@0") ++ pushStack())
+    .fill(variableCount)(
+      List(
+        "@0",
+        "D=A"
+      ) ++ pushStack()
+    )
     .flatten
 
 inline private def pushSegmentPointer(segment: MemorySegment) = List(
@@ -105,11 +110,12 @@ inline private def restoreSegmentPointer(
 
 private def storeSegmentPointer(
     segment: MemorySegment,
-    offset: Int
+    offset: Int,
+    filename: String
 ): List[String] = {
   val addressInD = segment match {
     case MemorySegment.Static =>
-      List("@STATIC_" + offset, "D=A")
+      List("@STATIC_" + filename + "_" + offset, "D=A")
     case MemorySegment.Temp =>
       List("@R" + (offset + 5), "D=A")
     case MemorySegment.Pointer =>
@@ -165,21 +171,27 @@ case class PushConstant(val x: Int) extends Instruction {
   ).flatten
 }
 
-case class PopMemorySegment(val segment: MemorySegment, offset: Int)
-    extends Instruction {
+case class PopMemorySegment(
+    val segment: MemorySegment,
+    offset: Int,
+    filename: String
+) extends Instruction {
   override val toAssembly: List[String] = List(
     List("// pop " + segment),
-    storeSegmentPointer(segment, offset),
+    storeSegmentPointer(segment, offset, filename),
     popStack(),
     storePointer(SEGMENT_ADDRESS)
   ).flatten
 }
 
-case class PushMemorySegment(val segment: MemorySegment, offset: Int)
-    extends Instruction {
+case class PushMemorySegment(
+    val segment: MemorySegment,
+    offset: Int,
+    filename: String
+) extends Instruction {
   override val toAssembly: List[String] = List(
     List("// pop " + segment),
-    storeSegmentPointer(segment, offset),
+    storeSegmentPointer(segment, offset, filename),
     loadPointer(SEGMENT_ADDRESS),
     pushStack()
   ).flatten

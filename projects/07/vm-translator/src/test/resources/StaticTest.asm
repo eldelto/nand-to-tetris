@@ -23,7 +23,7 @@ M=D
 @SP
 M=M+1
 // pop Static
-@STATIC_8
+@STATIC_StaticTest.vm_8
 D=A
 @R13
 M=D
@@ -36,7 +36,7 @@ D=M
 A=M
 M=D
 // pop Static
-@STATIC_3
+@STATIC_StaticTest.vm_3
 D=A
 @R13
 M=D
@@ -49,7 +49,7 @@ D=M
 A=M
 M=D
 // pop Static
-@STATIC_1
+@STATIC_StaticTest.vm_1
 D=A
 @R13
 M=D
@@ -62,7 +62,7 @@ D=M
 A=M
 M=D
 // pop Static
-@STATIC_3
+@STATIC_StaticTest.vm_3
 D=A
 @R13
 M=D
@@ -75,7 +75,7 @@ M=D
 @SP
 M=M+1
 // pop Static
-@STATIC_1
+@STATIC_StaticTest.vm_1
 D=A
 @R13
 M=D
@@ -98,7 +98,7 @@ A=M-1
 D=M-D
 M=D
 // pop Static
-@STATIC_8
+@STATIC_StaticTest.vm_8
 D=A
 @R13
 M=D
