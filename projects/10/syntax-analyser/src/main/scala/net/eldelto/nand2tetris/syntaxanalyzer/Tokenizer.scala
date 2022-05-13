@@ -2,7 +2,7 @@ package net.eldelto.nand2tetris.syntaxanalyzer
 
 import cats.implicits._
 
-sealed trait Token {
+trait Token {
   def value: String
 }
 
@@ -74,18 +74,18 @@ object StringConstant {
     else none
 }
 
-case class Identifier(value: String) extends Token
-object Identifier {
-  def parse(rawValue: String): Option[Identifier] = Identifier(rawValue).some
+case class StringIdentifier(value: String) extends Token
+object StringIdentifier {
+  def parse(rawValue: String): Option[StringIdentifier] = StringIdentifier(rawValue).some
 }
 
 def parseNonSymbol(rawValue: String): Token = Keyword
   .parse(rawValue)
   .orElse(IntConstant.parse(rawValue))
   .orElse(StringConstant.parse(rawValue))
-  .orElse(Identifier.parse(rawValue))
+  .orElse(StringIdentifier.parse(rawValue))
   .getOrElse(
-    throw IllegalArgumentException(s"'$rawValue' is not a valid identifier")
+    throw IllegalArgumentException(s"'$rawValue' is not a valid StringIdentifier")
   )
 
 def tokenize(input: List[Char]): List[Token] = {

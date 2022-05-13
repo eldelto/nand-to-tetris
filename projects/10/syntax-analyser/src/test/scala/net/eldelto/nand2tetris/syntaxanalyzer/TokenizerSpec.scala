@@ -13,11 +13,11 @@ class TokenizerSpec
 
     val expected = List(
       Keyword.Class,
-      Identifier("MyClass"),
+      StringIdentifier("MyClass"),
     Symbol.LeftCurly,
     Keyword.Field,
     Keyword.Int,
-    Identifier("x"),
+    StringIdentifier("x"),
     Symbol.Equals,
     IntConstant("0"),
     Symbol.SemiColon,
