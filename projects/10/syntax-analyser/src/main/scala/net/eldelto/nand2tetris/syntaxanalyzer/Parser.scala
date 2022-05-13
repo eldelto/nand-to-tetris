@@ -32,18 +32,18 @@ val Identifier = ExpectType[StringIdentifier]
 
 class VarDec extends SyntaxRule {
   private val rule = Sequence(
-  ExpectToken(Keyword.Var),
-  Identifier,
-  Identifier,
-  ExpectToken(Symbol.SemiColon)
-)
+    ExpectToken(Keyword.Var),
+    Identifier, // TODO: Or
+    Identifier,
+    ExpectToken(Symbol.SemiColon)
+  )
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
-    rule.execute(parser).map {nodes =>
+    rule.execute(parser).map { nodes =>
       val varType = nodes(0).asInstanceOf[IdentifierNode].value
       val name = nodes(1).asInstanceOf[IdentifierNode].value
       VarDecNode(varType, name).pure[List]
-      }
-}
+    }
+  }
 }
 
 class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
@@ -62,7 +62,7 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     var result = List[ASTNode]().asRight[Throwable]
     var advancable = true
-      while(advancable) {
+    while (advancable) {
       result = for {
         resultNodes <- result
         nodes <- rule.execute(parser)
@@ -72,6 +72,13 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
 
     result
   }
+}
+
+class Or(val rules: SyntaxRule*) extends SyntaxRule {
+  override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = rules
+    .map(_.execute(parser))
+    .find(_.isRight)
+    .getOrElse(new IllegalArgumentException("No or clause matched").asLeft)
 }
 
 object ExpectType {

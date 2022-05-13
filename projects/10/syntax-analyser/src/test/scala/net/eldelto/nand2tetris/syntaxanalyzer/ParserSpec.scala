@@ -15,6 +15,8 @@ class ParserSpec
       (ExpectType[StringIdentifier], List(StringIdentifier("test")), List(IdentifierNode("test"))),
       (Sequence(ExpectToken(Keyword.Var), ExpectType[StringIdentifier]), List(Keyword.Var, StringIdentifier("test")), List(IdentifierNode("test"))),
       (Repeat(ExpectType[StringIdentifier]), List(StringIdentifier("val1"), StringIdentifier("val2")), List(IdentifierNode("val1"), IdentifierNode("val2"))),
+      (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(Keyword.Var), List()),
+      (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(StringIdentifier("test")), List(IdentifierNode("test"))),
       
 
       // (VarDec(), List(Keyword.Var,StringIdentifier("int"),StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode("int", "var1"))),
