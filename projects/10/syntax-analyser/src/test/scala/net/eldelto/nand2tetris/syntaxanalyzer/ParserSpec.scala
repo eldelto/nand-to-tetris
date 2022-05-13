@@ -13,12 +13,15 @@ class ParserSpec
       ("rule", "tokens", "AST nodes"),
       (ExpectToken(Keyword.Var), List(Keyword.Var), List()),
       (ExpectType[StringIdentifier], List(StringIdentifier("test")), List(IdentifierNode("test"))),
-      (Sequence(ExpectToken(Keyword.Var), ExpectType[StringIdentifier]), List(Keyword.Var, StringIdentifier("test")), List(IdentifierNode("test")))
-      // (List(Keyword.Var,StringIdentifier("int"),StringIdentifier("var1"),Symbol.SemiColon), VarDecNode("int", "var1")),
+      (Sequence(ExpectToken(Keyword.Var), ExpectType[StringIdentifier]), List(Keyword.Var, StringIdentifier("test")), List(IdentifierNode("test"))),
+      (Repeat(ExpectType[StringIdentifier]), List(StringIdentifier("val1"), StringIdentifier("val2")), List(IdentifierNode("val1"), IdentifierNode("val2"))),
+      
+
+      // (VarDec(), List(Keyword.Var,StringIdentifier("int"),StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode("int", "var1"))),
     )
 
     forAll(testData) { (rule, tokens, expected) =>
-      val result = new ParserImpl(tokens).parse(rule)
+      val result = rule.execute(new ParserImpl(tokens))
       result shouldBe Right(expected)
     }
   }
