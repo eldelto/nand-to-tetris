@@ -10,7 +10,7 @@ import java.util.concurrent.ArrayBlockingQueue
 sealed trait ASTNode
 case class IdentifierNode(value: String) extends ASTNode
 case class KeywordNode(value: String) extends ASTNode
-case class objectNode(children: List[ASTNode]) extends ASTNode
+case class ClassNode(children: List[ASTNode]) extends ASTNode
 case class ClassVarDecNode(children: List[ASTNode]) extends ASTNode
 case class VarDecNode(children: List[ASTNode]) extends ASTNode
 case class SubroutineDecNode(children: List[ASTNode]) extends ASTNode
@@ -55,7 +55,7 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
     } else if (bufferIndex <= -1) {
       new IllegalStateException("No tokens left").asLeft
     } else if (!tokenIterator.hasNext) {
-      bufferIndex -= 1
+      bufferIndex = -1
       ().asRight
     } else {
       tokenBuffer.append(tokenIterator.next)
@@ -162,7 +162,7 @@ object Class extends SyntaxRule {
   )
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      objectNode(nodes).pure[List]
+      ClassNode(nodes).pure[List]
     }
   }
 }

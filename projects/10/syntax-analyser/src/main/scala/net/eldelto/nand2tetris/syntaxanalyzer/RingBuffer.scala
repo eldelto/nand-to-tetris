@@ -11,5 +11,7 @@ class RingBuffer[A](val size: Int)(implicit ct: ClassTag[A]) {
         arrayIndex = (arrayIndex + 1) % size
     }
 
-    def get(index: Int): Option[A] = Option(array(((arrayIndex - 1) - index) % size))
+    def get(index: Int): Option[A] = Option(array(actualIndex(index)))
+
+    private def actualIndex(index: Int): Int = (size + (arrayIndex-1) - index) % size
 }

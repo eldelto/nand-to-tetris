@@ -7,8 +7,10 @@ class TokenizerSpec
     extends AnyFlatSpec
     with Matchers {
   "The tokenizer" should "properly tokenize the given input" in {
-    val input = """class MyClass {
-      field int x = 0;
+    val input = """/* Comment */
+    // Comment
+    class MyClass {
+      field int x = 0; // Comment
     }"""
 
     val expected = List(
