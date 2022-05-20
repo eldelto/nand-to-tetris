@@ -36,7 +36,7 @@ val Type = Or(TypeInt, TypeChar, TypeBoolean, Identifier)
 class VarDec extends SyntaxRule {
   private val rule = Sequence(
     ExpectToken(Keyword.Var),
-    Type, 
+    Type,
     Identifier,
     Repeat(
       Sequence(
@@ -69,7 +69,9 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     var result = List[ASTNode]().asRight[Throwable]
     var advancable = true
+    var i = 0
     while (advancable) {
+      i += 1
       result = for {
         resultNodes <- result
         nodes <- rule.execute(parser)
@@ -77,7 +79,15 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
       advancable = parser.advance().isRight
     }
 
-    result
+    result match {
+      case Right(nodes) if nodes.size == 0 =>
+        parser.rewind(i)
+        result
+      case Right(_) => result
+      case Left(_) =>
+        parser.rewind(i-1)
+        List[ASTNode]().asRight[Throwable]
+    }
   }
 }
 
@@ -133,7 +143,8 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
 
   override def getToken(): Token = tokenBuffer.get(bufferIndex + 1).get
 
-  override def getNextToken(): Option[Token] = if (bufferIndex >= 0) tokenBuffer.get(bufferIndex) else Option.empty
+  override def getNextToken(): Option[Token] =
+    if (bufferIndex >= 0) tokenBuffer.get(bufferIndex) else Option.empty
 
   override def advance(): Either[Throwable, Unit] = {
     if (bufferIndex > 0) {
@@ -149,9 +160,12 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
       ().asRight
     }
   }
-  
+
   override def rewind(count: Int): Unit = {
-    if (count >= tokenBuffer.size) throw IllegalArgumentException("Rewind count is larger than buffer size: " + tokenBuffer.size)
+    if (count >= tokenBuffer.size)
+      throw IllegalArgumentException(
+        "Rewind count is larger than buffer size: " + tokenBuffer.size
+      )
     bufferIndex = count
   }
 }
