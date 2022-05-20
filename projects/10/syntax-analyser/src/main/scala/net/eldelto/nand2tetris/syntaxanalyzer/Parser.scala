@@ -3,6 +3,10 @@ package net.eldelto.nand2tetris.syntaxanalyzer
 import scala.reflect.TypeTest
 import cats.data.EitherT
 import cats.implicits._
+import scala.collection.mutable.Stack
+import java.util.Queue
+import java.util.concurrent.ArrayBlockingQueue
+import org.apache.commons.collections4.queue.CircularFifoQueue
 
 // sealed trait SyntaxNode
 // case class Or(nodes: SyntaxNode*)
@@ -14,7 +18,8 @@ import cats.implicits._
 
 sealed trait ASTNode
 case class IdentifierNode(value: String) extends ASTNode
-case class VarDecNode(dataType: String, identifier: String) extends ASTNode
+case class KeywordNode(value: String) extends ASTNode
+case class VarDecNode(children: List[ASTNode]) extends ASTNode
 
 trait SyntaxRule {
   def execute(parser: Parser): Either[Throwable, List[ASTNode]]
@@ -23,25 +28,27 @@ trait SyntaxRule {
 // type SyntaxRule = (parser: Parser) => Either[Throwable, List[ASTNode]]
 
 val Identifier = ExpectType[StringIdentifier]
-// val VarDec = Sequence(
-//   ExpectToken(Keyword.Var),
-//   Identifier,
-//   Identifier,
-//   ExpectToken(Symbol.SemiColon)
-// )
+val TypeInt = ExpectToken(Keyword.Int)
+val TypeChar = ExpectToken(Keyword.Char)
+val TypeBoolean = ExpectToken(Keyword.Boolean)
+val Type = Or(TypeInt, TypeChar, TypeBoolean, Identifier)
 
 class VarDec extends SyntaxRule {
   private val rule = Sequence(
     ExpectToken(Keyword.Var),
-    Identifier, // TODO: Or
+    Type, 
     Identifier,
+    Repeat(
+      Sequence(
+        ExpectToken(Symbol.Comma),
+        Identifier
+      )
+    ),
     ExpectToken(Symbol.SemiColon)
   )
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      val varType = nodes(0).asInstanceOf[IdentifierNode].value
-      val name = nodes(1).asInstanceOf[IdentifierNode].value
-      VarDecNode(varType, name).pure[List]
+      VarDecNode(nodes).pure[List]
     }
   }
 }
@@ -96,8 +103,9 @@ object ExpectType {
 
 class ExpectToken[T <: Token](val expected: T) extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] =
-    if (parser.getToken() == expected) {
-      List[ASTNode]().asRight[Throwable]
+    val token = parser.getToken()
+    if (token == expected) {
+      KeywordNode(token.value).pure[List].asRight[Throwable]
     } else {
       new IllegalArgumentException("Unexpected token: " + parser.getToken())
         .asLeft[List[ASTNode]]
@@ -110,28 +118,40 @@ trait Parser {
   def getToken(): Token
   def getNextToken(): Option[Token]
   def advance(): Either[Throwable, Unit]
+  def rewind(count: Int): Unit
 }
 
 class ParserImpl(val tokens: List[Token]) extends Parser {
   private val tokenIterator = tokens.iterator
-  private var token: Token = tokenIterator.next
-  private var nextToken: Option[Token] = tokenIterator.nextOption
+  private val tokenBuffer: RingBuffer[Token] = new RingBuffer(10)
+  private var bufferIndex: Int = 0
 
-  override def getToken(): Token = token
+  {
+    this.advance()
+    this.advance()
+  }
 
-  override def getNextToken(): Option[Token] = nextToken
+  override def getToken(): Token = tokenBuffer.get(bufferIndex + 1).get
+
+  override def getNextToken(): Option[Token] = if (bufferIndex >= 0) tokenBuffer.get(bufferIndex) else Option.empty
 
   override def advance(): Either[Throwable, Unit] = {
-    if (nextToken.isEmpty) {
+    if (bufferIndex > 0) {
+      bufferIndex -= 1
+      ().asRight
+    } else if (bufferIndex <= -1) {
       new IllegalStateException("No tokens left").asLeft
     } else if (!tokenIterator.hasNext) {
-      token = nextToken.get
-      nextToken = None
+      bufferIndex -= 1
       ().asRight
     } else {
-      token = nextToken.get
-      nextToken = tokenIterator.nextOption
+      tokenBuffer.append(tokenIterator.next)
       ().asRight
     }
+  }
+  
+  override def rewind(count: Int): Unit = {
+    if (count >= tokenBuffer.size) throw IllegalArgumentException("Rewind count is larger than buffer size: " + tokenBuffer.size)
+    bufferIndex = count
   }
 }

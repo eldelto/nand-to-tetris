@@ -11,15 +11,13 @@ class ParserSpec
   "The parser" should "properly parse the given tokens" in {
     val testData = Table[SyntaxRule, List[Token], List[ASTNode]](
       ("rule", "tokens", "AST nodes"),
-      (ExpectToken(Keyword.Var), List(Keyword.Var), List()),
+      (ExpectToken(Keyword.Var), List(Keyword.Var), List(KeywordNode("var"))),
       (ExpectType[StringIdentifier], List(StringIdentifier("test")), List(IdentifierNode("test"))),
-      (Sequence(ExpectToken(Keyword.Var), ExpectType[StringIdentifier]), List(Keyword.Var, StringIdentifier("test")), List(IdentifierNode("test"))),
+      (Sequence(ExpectToken(Keyword.Var), ExpectType[StringIdentifier]), List(Keyword.Var, StringIdentifier("test")), List(KeywordNode("var"), IdentifierNode("test"))),
       (Repeat(ExpectType[StringIdentifier]), List(StringIdentifier("val1"), StringIdentifier("val2")), List(IdentifierNode("val1"), IdentifierNode("val2"))),
-      (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(Keyword.Var), List()),
+      (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(Keyword.Var), List(KeywordNode("var"))),
       (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(StringIdentifier("test")), List(IdentifierNode("test"))),
-      
-
-      // (VarDec(), List(Keyword.Var,StringIdentifier("int"),StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode("int", "var1"))),
+      (VarDec(), List(Keyword.Var,StringIdentifier("int"),StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode(List[ASTNode]()))),
     )
 
     forAll(testData) { (rule, tokens, expected) =>
