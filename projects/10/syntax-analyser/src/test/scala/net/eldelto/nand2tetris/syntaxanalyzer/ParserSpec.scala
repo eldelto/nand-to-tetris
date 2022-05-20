@@ -17,7 +17,7 @@ class ParserSpec
       (Repeat(ExpectType[StringIdentifier]), List(StringIdentifier("val1"), StringIdentifier("val2")), List(IdentifierNode("val1"), IdentifierNode("val2"))),
       (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(Keyword.Var), List(KeywordNode("var"))),
       (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(StringIdentifier("test")), List(IdentifierNode("test"))),
-      (VarDec(), List(Keyword.Var,Keyword.Int,StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode(List(KeywordNode("var"), KeywordNode("int"), IdentifierNode("var1"), KeywordNode(";")))))
+      (VarDec, List(Keyword.Var,Keyword.Int,StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode(List(KeywordNode("var"), KeywordNode("int"), IdentifierNode("var1"), KeywordNode(";")))))
     )
 
     forAll(testData) { (rule, tokens, expected) =>

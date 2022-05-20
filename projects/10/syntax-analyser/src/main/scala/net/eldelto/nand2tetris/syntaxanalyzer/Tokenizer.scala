@@ -50,7 +50,7 @@ enum Symbol(val value: String) extends Token {
   case Slash extends Symbol("/")
   case Ampersand extends Symbol("&")
   case Pipe extends Symbol("|")
-  case LesserThan extends Symbol("<")
+  case LessThan extends Symbol("<")
   case GreaterThan extends Symbol(">")
   case Equals extends Symbol("=")
   case Tilde extends Symbol("~")
