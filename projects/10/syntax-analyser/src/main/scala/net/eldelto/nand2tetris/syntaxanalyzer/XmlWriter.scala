@@ -6,7 +6,9 @@ def writeXml(node: ASTNode): List[String] = {
   node match {
     case IdentifierNode(value) =>
       s"<identifier> $value </identifier>".pure[List]
-    case KeywordNode(value)        => s"<keyword> $value </keyword>".pure[List]
+    case KeywordNode(value)        => 
+      if (value.length == 1) s"<symbol> $value </symbol>".pure[List]
+      else s"<keyword> $value </keyword>".pure[List]
     case ClassNode(children)       => encloseChildren("class", children)
     case ClassVarDecNode(children) => encloseChildren("classVarDec", children)
     case VarDecNode(children)      => encloseChildren("varDec", children)

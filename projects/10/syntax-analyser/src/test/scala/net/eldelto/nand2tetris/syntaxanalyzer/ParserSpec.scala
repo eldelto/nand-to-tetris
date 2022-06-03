@@ -15,9 +15,11 @@ class ParserSpec
       (ExpectType[StringIdentifier], List(StringIdentifier("test")), List(IdentifierNode("test"))),
       (Sequence(ExpectToken(Keyword.Var), ExpectType[StringIdentifier]), List(Keyword.Var, StringIdentifier("test")), List(KeywordNode("var"), IdentifierNode("test"))),
       (Repeat(ExpectType[StringIdentifier]), List(StringIdentifier("val1"), StringIdentifier("val2")), List(IdentifierNode("val1"), IdentifierNode("val2"))),
+      (Sequence(Repeat(ExpectType[StringIdentifier]), ExpectToken(Symbol.SemiColon)), List(StringIdentifier("val1"), StringIdentifier("val2"), Symbol.SemiColon), List(IdentifierNode("val1"), IdentifierNode("val2"), KeywordNode(";"))),
       (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(Keyword.Var), List(KeywordNode("var"))),
       (Or(ExpectType[StringIdentifier], ExpectToken(Keyword.Var)), List(StringIdentifier("test")), List(IdentifierNode("test"))),
-      (VarDec, List(Keyword.Var,Keyword.Int,StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode(List(KeywordNode("var"), KeywordNode("int"), IdentifierNode("var1"), KeywordNode(";")))))
+      (VarDec, List(Keyword.Var,Keyword.Int,StringIdentifier("var1"),Symbol.SemiColon), List(VarDecNode(List(KeywordNode("var"), KeywordNode("int"), IdentifierNode("var1"), KeywordNode(";"))))),
+      (ClassVarDec, List(Keyword.Static,Keyword.Boolean,StringIdentifier("var1"),Symbol.SemiColon), List(ClassVarDecNode(List(KeywordNode("static"), KeywordNode("boolean"), IdentifierNode("var1"), KeywordNode(";")))))
     )
 
     forAll(testData) { (rule, tokens, expected) =>

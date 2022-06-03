@@ -35,7 +35,7 @@ trait Parser {
 
 class ParserImpl(val tokens: List[Token]) extends Parser {
   private val tokenIterator = tokens.iterator
-  private val tokenBuffer: RingBuffer[Token] = new RingBuffer(10)
+  private val tokenBuffer: RingBuffer[Token] = new RingBuffer(100)
   private var bufferIndex: Int = 0
 
   {
@@ -78,14 +78,19 @@ trait SyntaxRule {
 
 class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] =
+    var i = 0
     val acc = rules.head.execute(parser)
-    rules.tail.foldLeft(acc) { (acc, rule) =>
+    val result = rules.tail.foldLeft(acc) { (acc, rule) =>
+      i += 1
       for {
         _ <- parser.advance()
         accNodes <- acc
         nodes <- rule.execute(parser)
       } yield accNodes ++ nodes
     }
+
+    if (result.isLeft) parser.rewind(i)
+    result
 }
 
 class Repeat(val rule: SyntaxRule) extends SyntaxRule {
@@ -95,16 +100,20 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
     var i = 0
     while (advancable) {
       i += 1
-      result = for {
+      val tmpResult = for {
         resultNodes <- result
         nodes <- rule.execute(parser)
       } yield resultNodes ++ nodes
-      advancable = parser.advance().isRight
+
+      if (tmpResult.isRight) result = tmpResult
+      else parser.rewind(1) // TODO: This shouldn't do anything but actually rewinds by 1...
+
+      advancable = parser.advance().isRight && tmpResult.isRight
     }
 
     result match {
       case Right(nodes) if nodes.size == 0 =>
-        parser.rewind(i)
+        parser.rewind(i-1)
         result
       case Right(_) => result
       case Left(_) =>
@@ -128,7 +137,7 @@ object ExpectType {
         case token: T =>
           IdentifierNode(token.value).pure[List].asRight[Throwable]
         case token =>
-          new IllegalArgumentException("Unexpected token type: " + token)
+          new IllegalArgumentException(s"Unexpected token type: Wanted $tt but got $token")
             .asLeft[List[ASTNode]]
       }
   }
@@ -140,7 +149,7 @@ class ExpectToken[T <: Token](val expected: T) extends SyntaxRule {
     if (token == expected) {
       KeywordNode(token.value).pure[List].asRight[Throwable]
     } else {
-      new IllegalArgumentException("Unexpected token: " + parser.getToken())
+      new IllegalArgumentException(s"Unexpected token: Wanted $expected but got $token")
         .asLeft[List[ASTNode]]
     }
 }
@@ -173,6 +182,7 @@ object ClassVarDec extends SyntaxRule {
       ExpectToken(Keyword.Static),
       ExpectToken(Keyword.Field)
     ),
+    Type,
     Identifier,
     Repeat(
       Sequence(
