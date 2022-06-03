@@ -88,7 +88,27 @@ def parseNonSymbol(rawValue: String): Token = Keyword
     throw IllegalArgumentException(s"'$rawValue' is not a valid StringIdentifier")
   )
 
-def tokenize(input: List[Char]): List[Token] = {
+def tokenize(inputLines: List[String]): List[Token] = {
+  val charList = filterComments(inputLines)
+  .map(_.toList)
+  .flatten
+
+  parseTokens(charList)
+}
+
+private def filterComments(inputLines: List[String]): List[String] = {
+  var isBlockComment = false
+  inputLines.map(_.split("//").head)
+  .filter{ line =>
+    val containsStart = line.contains("/*")
+    val containsEnd = line.contains("*/")
+    if (containsStart) isBlockComment = true
+    if (containsEnd) isBlockComment = false
+    !(isBlockComment | containsStart | containsEnd)
+  }
+}
+
+private def parseTokens(input: List[Char]): List[Token] = {
   var tokenBuffer: String = ""
   return input.map { char =>
     if (char == ' ') {

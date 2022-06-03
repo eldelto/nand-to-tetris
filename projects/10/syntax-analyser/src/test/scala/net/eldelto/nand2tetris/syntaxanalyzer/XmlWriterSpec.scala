@@ -4,6 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import java.nio.file.Files
+import scala.jdk.StreamConverters._
 
 class XmlWriterSpec
     extends AnyFlatSpec
@@ -20,7 +21,7 @@ class XmlWriterSpec
       val jackFileSource = Files.readString(resourcePath(jackFile))
       val expectedXmlSource = Files.readString(resourcePath(expectedXml))
 
-      val tokens = tokenize(jackFileSource.toList)
+      val tokens = tokenize(jackFileSource.lines.toScala(List))
       val ast = Class.execute(new ParserImpl(tokens))
       val result = ast
         .map(_.map(writeXml(_)).flatten)
