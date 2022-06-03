@@ -43,7 +43,11 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
     this.advance()
   }
 
-  override def getToken(): Token = tokenBuffer.get(bufferIndex + 1).get
+  override def getToken(): Token = {
+    val token = tokenBuffer.get(bufferIndex + 1)
+    println(s"getting to $token index=$bufferIndex")
+    token.get
+  }
 
   override def getNextToken(): Option[Token] =
     if (bufferIndex >= 0) tokenBuffer.get(bufferIndex) else Option.empty
@@ -68,7 +72,8 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
       throw IllegalArgumentException(
         "Rewind count is larger than buffer size: " + tokenBuffer.size
       )
-    bufferIndex = count
+    bufferIndex += count
+    println(s"rewinding to ${getToken()} index=$bufferIndex")
   }
 }
 
@@ -76,21 +81,47 @@ trait SyntaxRule {
   def execute(parser: Parser): Either[Throwable, List[ASTNode]]
 }
 
+// class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
+//   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] =
+//     var i = 0
+//     val acc = rules.head.execute(parser)
+//     val result = rules.tail.foldLeft(acc) { (acc, rule) =>
+//       i += 1
+//       for {
+//         _ <- parser.advance()
+//         accNodes <- acc
+//         nodes <- rule.execute(parser)
+//       } yield accNodes ++ nodes
+//     }
+
+//     if (result.isLeft) parser.rewind(i)
+//     result
+// }
+
 class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
-  override def execute(parser: Parser): Either[Throwable, List[ASTNode]] =
-    var i = 0
-    val acc = rules.head.execute(parser)
-    val result = rules.tail.foldLeft(acc) { (acc, rule) =>
-      i += 1
-      for {
-        _ <- parser.advance()
-        accNodes <- acc
-        nodes <- rule.execute(parser)
-      } yield accNodes ++ nodes
+  override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
+    var result = rules.head.execute(parser)
+    if (result.isLeft) {
+        return result
     }
 
-    if (result.isLeft) parser.rewind(i)
+    var i = 1
+    for(rule <- rules.tail) {
+      i += 1
+      result = for {
+        _ <- parser.advance()
+        resultnodes <- result
+        nodes <- rule.execute(parser)
+      } yield resultnodes ++ nodes
+
+      if (result.isLeft) {
+        parser.rewind(i-1)
+        return result
+      }
+    }
+
     result
+  }
 }
 
 class Repeat(val rule: SyntaxRule) extends SyntaxRule {
@@ -106,18 +137,18 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
       } yield resultNodes ++ nodes
 
       if (tmpResult.isRight) result = tmpResult
-      else parser.rewind(1) // TODO: This shouldn't do anything but actually rewinds by 1...
+      else parser.rewind(1)
 
-      advancable = parser.advance().isRight && tmpResult.isRight
+      advancable = tmpResult.isRight && parser.advance().isRight 
     }
 
     result match {
       case Right(nodes) if nodes.size == 0 =>
-        parser.rewind(i-1)
+        // parser.rewind(i)
         result
       case Right(_) => result
       case Left(_) =>
-        parser.rewind(i - 1)
+        // parser.rewind(i-1)
         List[ASTNode]().asRight[Throwable]
     }
   }
