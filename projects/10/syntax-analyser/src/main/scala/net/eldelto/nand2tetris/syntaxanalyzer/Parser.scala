@@ -102,11 +102,11 @@ class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     var result = rules.head.execute(parser)
     if (result.isLeft) {
-        return result
+      return result
     }
 
     var i = 1
-    for(rule <- rules.tail) {
+    for (rule <- rules.tail) {
       i += 1
       result = for {
         _ <- parser.advance()
@@ -115,7 +115,7 @@ class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
       } yield resultnodes ++ nodes
 
       if (result.isLeft) {
-        parser.rewind(i-1)
+        parser.rewind(i - 1)
         return result
       }
     }
@@ -139,7 +139,7 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
       if (tmpResult.isRight) result = tmpResult
       else parser.rewind(1)
 
-      advancable = tmpResult.isRight && parser.advance().isRight 
+      advancable = tmpResult.isRight && parser.advance().isRight
     }
 
     result match {
@@ -147,7 +147,7 @@ class Repeat(val rule: SyntaxRule) extends SyntaxRule {
         // parser.rewind(i)
         result
       case Right(_) => result
-      case Left(_) =>
+      case Left(_)  =>
         // parser.rewind(i-1)
         List[ASTNode]().asRight[Throwable]
     }
@@ -168,7 +168,9 @@ object ExpectType {
         case token: T =>
           IdentifierNode(token.value).pure[List].asRight[Throwable]
         case token =>
-          new IllegalArgumentException(s"Unexpected token type: Wanted $tt but got $token")
+          new IllegalArgumentException(
+            s"Unexpected token type: Wanted $tt but got $token"
+          )
             .asLeft[List[ASTNode]]
       }
   }
@@ -180,7 +182,9 @@ class ExpectToken[T <: Token](val expected: T) extends SyntaxRule {
     if (token == expected) {
       KeywordNode(token.value).pure[List].asRight[Throwable]
     } else {
-      new IllegalArgumentException(s"Unexpected token: Wanted $expected but got $token")
+      new IllegalArgumentException(
+        s"Unexpected token: Wanted $expected but got $token"
+      )
         .asLeft[List[ASTNode]]
     }
 }
@@ -244,7 +248,7 @@ object SubroutineDec extends SyntaxRule {
     ),
     Identifier,
     ExpectToken(Symbol.LeftParen),
-    ParameterList,
+    Repeat(ParameterList),
     ExpectToken(Symbol.RightParen),
     SubroutineBody
   )
@@ -494,14 +498,14 @@ val SubroutineCall = Or(
 object ExpressionList extends SyntaxRule {
   private val rule = Repeat( // TODO: Optional
     Sequence(
-    Expression, 
-    Repeat(
-      Sequence(
-        ExpectToken(Symbol.Comma),
-        Expression
+      Expression,
+      Repeat(
+        Sequence(
+          ExpectToken(Symbol.Comma),
+          Expression
+        )
       )
     )
-  ),
   )
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
@@ -524,13 +528,13 @@ val Op = Or(
 )
 
 val UnaryOp = Or(
-ExpectToken(Symbol.Minus),
-ExpectToken(Symbol.Tilde),
+  ExpectToken(Symbol.Minus),
+  ExpectToken(Symbol.Tilde)
 )
 
 val KeywordConstant = Or(
   ExpectToken(Keyword.True),
   ExpectToken(Keyword.False),
   ExpectToken(Keyword.Null),
-  ExpectToken(Keyword.This),
+  ExpectToken(Keyword.This)
 )
