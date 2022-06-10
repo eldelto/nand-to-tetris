@@ -284,7 +284,7 @@ object SubroutineBody extends SyntaxRule {
   private val rule = Sequence(
     ExpectToken(Symbol.LeftCurly),
     Repeat(VarDec),
-    Statements,
+    Repeat(Statements),
     ExpectToken(Symbol.RightCurly)
   )
 
