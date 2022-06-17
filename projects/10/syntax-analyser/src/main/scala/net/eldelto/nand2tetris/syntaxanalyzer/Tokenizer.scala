@@ -1,6 +1,7 @@
 package net.eldelto.nand2tetris.syntaxanalyzer
 
 import cats.implicits._
+import scala.collection.mutable.ListBuffer
 
 trait Token {
   def value: String
@@ -93,7 +94,8 @@ def tokenize(inputLines: List[String]): List[Token] = {
   .map(_.toList)
   .flatten
 
-  parseTokens(charList)
+  val tokens = parseTokens(charList)
+  return combineStringConstants(tokens)
 }
 
 private def filterComments(inputLines: List[String]): List[String] = {
@@ -128,4 +130,25 @@ private def parseTokens(input: List[Char]): List[Token] = {
     }
   }.flatten
   .filter(_.value.trim.nonEmpty)
+}
+
+private def combineStringConstants(tokens: List[Token]): List[Token] = {
+  var isStringConstant = false
+  var stringConstant = ""
+  val result: ListBuffer[Token] = ListBuffer()
+  for(token <- tokens) {
+    token match {
+      case StringIdentifier(value) if value.startsWith("\"") => 
+        isStringConstant = true
+        stringConstant = value.substring(1)
+       case StringIdentifier(value) if value.endsWith("\"") => 
+        isStringConstant = false
+        stringConstant = stringConstant + " " + value.substring(0, value.length - 1)
+        result.addOne(StringConstant(stringConstant))
+      case _ if isStringConstant => stringConstant = stringConstant + " " + token.value
+      case _ => result.addOne(token)
+    } 
+  }
+
+  return result.toList
 }

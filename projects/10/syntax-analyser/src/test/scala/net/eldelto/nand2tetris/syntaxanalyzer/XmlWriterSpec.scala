@@ -17,6 +17,9 @@ class XmlWriterSpec
       ("jackFile", "expectedXml"),
       ("Minimal.jack", "Minimal.xml"),
       ("ExpressionLessSquare/Main.jack", "ExpressionLessSquare/Main.xml"),
+      ("ExpressionLessSquare/Square.jack", "ExpressionLessSquare/Square.xml"),
+      ("ExpressionLessSquare/SquareGame.jack", "ExpressionLessSquare/SquareGame.xml"),
+      ("Square/Main.jack", "Square/Main.xml"),
     )
 
     forAll(testData) { (jackFile, expectedXml) =>
@@ -30,7 +33,7 @@ class XmlWriterSpec
         .getOrElse(List())
         .reduce((a, b) => a + "\n" + b)
 
-      // Files.writeString(Path.of("out.xml"), result)
+      Files.writeString(Path.of("out.xml"), result)
       result shouldBe expectedXmlSource
     }
   }

@@ -14,6 +14,7 @@ class TokenizerSpec extends AnyFlatSpec with Matchers {
     // Comment
     class MyClass {
       field int x = 0; // Comment
+      field String y = "string constant"; // Comment
     }"""
 
     val expected = List(
@@ -26,7 +27,13 @@ class TokenizerSpec extends AnyFlatSpec with Matchers {
       Symbol.Equals,
       IntConstant("0"),
       Symbol.SemiColon,
-      Symbol.RightCurly
+      Keyword.Field,
+      StringIdentifier("String"),
+      StringIdentifier("y"),
+      Symbol.Equals,
+      StringConstant("string constant"),
+      Symbol.SemiColon,
+      Symbol.RightCurly,
     )
 
     val result = tokenize(input.lines.toScala(List))
