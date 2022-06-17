@@ -1,20 +1,21 @@
 package net.eldelto.nand2tetris.syntaxanalyzer
 
 import cats.implicits._
+import org.apache.commons.text.StringEscapeUtils
 
 def astToXml(ast:List[ASTNode]): List[String] = ast.map(writeXml).flatten
 
 def writeXml(node: ASTNode): List[String] = {
   node match {
     case IdentifierNode(value) =>
-      s"<identifier> $value </identifier>".pure[List]
+      s"<identifier> ${StringEscapeUtils.escapeXml11(value)} </identifier>".pure[List]
     case IntegerConstantNode(value) =>
       s"<integerConstant> $value </integerConstant>".pure[List]
     case StringConstantNode(value) =>
-      s"<stringConstant> $value </stringConstant>".pure[List]
+      s"<stringConstant> ${StringEscapeUtils.escapeXml11(value)} </stringConstant>".pure[List]
     case KeywordNode(value)        => 
-      if (value.length == 1) s"<symbol> $value </symbol>".pure[List]
-      else s"<keyword> $value </keyword>".pure[List]
+      if (value.length == 1) s"<symbol> ${StringEscapeUtils.escapeXml11(value)} </symbol>".pure[List]
+      else s"<keyword> ${StringEscapeUtils.escapeXml11(value)} </keyword>".pure[List]
     case ClassNode(children)       => encloseChildren("class", children)
     case ClassVarDecNode(children) => encloseChildren("classVarDec", children)
     case VarDecNode(children)      => encloseChildren("varDec", children)

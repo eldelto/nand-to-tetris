@@ -20,6 +20,9 @@ class XmlWriterSpec
       ("ExpressionLessSquare/Square.jack", "ExpressionLessSquare/Square.xml"),
       ("ExpressionLessSquare/SquareGame.jack", "ExpressionLessSquare/SquareGame.xml"),
       ("Square/Main.jack", "Square/Main.xml"),
+      ("Square/Square.jack", "Square/Square.xml"),
+      ("Square/SquareGame.jack", "Square/SquareGame.xml"),
+      ("ArrayTest/Main.jack", "ArrayTest/Main.xml"),
     )
 
     forAll(testData) { (jackFile, expectedXml) =>

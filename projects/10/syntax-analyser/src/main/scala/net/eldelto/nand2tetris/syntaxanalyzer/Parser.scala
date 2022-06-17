@@ -474,22 +474,22 @@ object Expression extends SyntaxRule {
 
 object Term extends SyntaxRule {
   private val rule = Or(
-    ExpectType[IntConstant],
-    ExpectType[StringConstant],
-    KeywordConstant,
-    Identifier,
+    SubroutineCall,
     Sequence(
       Identifier,
       ExpectToken(Symbol.LeftBracket),
       Expression,
       ExpectToken(Symbol.RightBracket)
     ),
-    SubroutineCall,
     Sequence(
       ExpectToken(Symbol.LeftParen),
       Expression,
       ExpectToken(Symbol.RightParen)
     ),
+    ExpectType[IntConstant],
+    ExpectType[StringConstant],
+    KeywordConstant,
+    Identifier,
     Sequence(
       UnaryOp,
       Term

@@ -9,6 +9,8 @@ lazy val root = (project in file("."))
   .settings(
     name := "vm-translator",
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.7.0",
+    libraryDependencies += "org.apache.commons" % "commons-text" % "1.9",
+
     libraryDependencies += scalaTest % Test,
 
     // Build
