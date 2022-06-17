@@ -76,7 +76,7 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
         "Rewind count is larger than buffer size: " + tokenBuffer.size
       )
     bufferIndex += count
-    println(s"rewinding to ${getToken()} index=$bufferIndex")
+    println(s"rewinding to index=$bufferIndex")
   }
 }
 
@@ -111,8 +111,13 @@ class Sequence(val rules: SyntaxRule*) extends SyntaxRule {
     var i = 1
     for (rule <- rules.tail) {
       i += 1
+
+      // Hack to handle optional tokens at the end of a Sequence.
+      if (parser.advance().isLeft) {
+        return result
+      }
+
       result = for {
-        _ <- parser.advance()
         resultnodes <- result
         nodes <- rule.execute(parser)
       } yield resultnodes ++ nodes
@@ -289,7 +294,7 @@ object SubroutineBody extends SyntaxRule {
   private val rule = Sequence(
     ExpectToken(Symbol.LeftCurly),
     Repeat(VarDec),
-    Repeat(Statements),
+    Statements,
     ExpectToken(Symbol.RightCurly)
   )
 
@@ -322,12 +327,14 @@ object VarDec extends SyntaxRule {
 }
 
 object Statements extends SyntaxRule {
-  private val rule = Or(
-    LetStatement,
-    IfStatement,
-    WhileStatement,
-    DoStatement,
-    ReturnStatement
+  private val rule = Repeat(
+    Or(
+      LetStatement,
+      IfStatement,
+      WhileStatement,
+      DoStatement,
+      ReturnStatement
+    )
   )
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {

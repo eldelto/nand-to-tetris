@@ -42,7 +42,7 @@ class ParserSpec
       (
         SubroutineDec,
         List(Keyword.Function, Keyword.Void, StringIdentifier("test"), Symbol.LeftParen, Symbol.RightParen, Symbol.LeftCurly, Symbol.RightCurly), 
-        List(SubroutineDecNode(List(KeywordNode("function"), KeywordNode("void"), IdentifierNode("test"), KeywordNode("("), ParameterListNode(List.empty), KeywordNode(")"), SubroutineBodyNode(List(KeywordNode("{"),KeywordNode("}"))))))
+        List(SubroutineDecNode(List(KeywordNode("function"), KeywordNode("void"), IdentifierNode("test"), KeywordNode("("), ParameterListNode(List()), KeywordNode(")"), SubroutineBodyNode(List(KeywordNode("{"),StatementsNode(List()), KeywordNode("}"))))))
       ),
       (
         ReturnStatement,
@@ -53,6 +53,31 @@ class ParserSpec
         Statements,
         List(Keyword.Return, Symbol.SemiColon),
         List(StatementsNode(List(ReturnStatementNode(List(KeywordNode("return"), KeywordNode(";"))))))
+      ),
+      (
+        IfStatement,
+        List(Keyword.If, Symbol.LeftParen, Keyword.True, Symbol.RightParen, Symbol.LeftCurly, Symbol.RightCurly),
+        List(IfStatementNode(List(KeywordNode("if"), KeywordNode("("), ExpressionNode(List(TermNode(List(KeywordNode("true"))))), KeywordNode(")"), KeywordNode("{"), StatementsNode(List()), KeywordNode("}"))))
+      ),
+      (
+        Term,
+        List(Keyword.True),
+        List(TermNode(List(KeywordNode("true"))))
+      ),
+      (
+        Expression,
+        List(StringIdentifier("a"), Symbol.Plus, StringIdentifier("b")),
+        List(ExpressionNode(List(TermNode(List(IdentifierNode("a"))), KeywordNode("+"), TermNode(List(IdentifierNode("b"))))))
+      ),
+      (
+        Expression,
+        List(Keyword.True),
+        List(ExpressionNode(List(TermNode(List(KeywordNode("true"))))))
+      ),
+      (
+        Sequence(ExpectToken(Keyword.True), Repeat(ExpectToken(Keyword.False))),
+        List(Keyword.True),
+        List(KeywordNode("true"))
       ),
     )
 

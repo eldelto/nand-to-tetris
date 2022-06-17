@@ -14,7 +14,7 @@ class XmlWriterSpec
   "The XML writer" should "emit the proper XML for a given code sample" in {
     val testData = Table(
       ("jackFile", "expectedXml"),
-      ("Minimal.jack", "Minimal.xml")
+      ("Minimal.jack", "Minimal.xml"),
       // ("ExpressionLessSquare/Main.jack", "ExpressionLessSquare/Main.xml"),
     )
 
