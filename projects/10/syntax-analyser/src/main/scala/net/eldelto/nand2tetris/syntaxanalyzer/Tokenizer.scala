@@ -20,7 +20,7 @@ enum Keyword(val value: String) extends Token {
   case Boolean extends Keyword("boolean")
   case Void extends Keyword("void")
   case True extends Keyword("true")
-  case False extends Keyword("true")
+  case False extends Keyword("false")
   case Null extends Keyword("null")
   case This extends Keyword("this")
   case Let extends Keyword("let")
@@ -140,10 +140,10 @@ private def combineStringConstants(tokens: List[Token]): List[Token] = {
     token match {
       case StringIdentifier(value) if value.startsWith("\"") => 
         isStringConstant = true
-        stringConstant = value.substring(1)
+        stringConstant = value
        case StringIdentifier(value) if value.endsWith("\"") => 
         isStringConstant = false
-        stringConstant = stringConstant + " " + value.substring(0, value.length - 1)
+        stringConstant = stringConstant + " " + value
         result.addOne(StringConstant(stringConstant))
       case _ if isStringConstant => stringConstant = stringConstant + " " + token.value
       case _ => result.addOne(token)

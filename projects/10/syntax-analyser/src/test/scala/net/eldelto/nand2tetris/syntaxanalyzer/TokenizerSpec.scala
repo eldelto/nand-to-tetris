@@ -31,7 +31,7 @@ class TokenizerSpec extends AnyFlatSpec with Matchers {
       StringIdentifier("String"),
       StringIdentifier("y"),
       Symbol.Equals,
-      StringConstant("string constant"),
+      StringConstant("\"string constant\""),
       Symbol.SemiColon,
       Symbol.RightCurly,
     )

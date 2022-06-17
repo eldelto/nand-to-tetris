@@ -8,6 +8,10 @@ def writeXml(node: ASTNode): List[String] = {
   node match {
     case IdentifierNode(value) =>
       s"<identifier> $value </identifier>".pure[List]
+    case IntegerConstantNode(value) =>
+      s"<integerConstant> $value </integerConstant>".pure[List]
+    case StringConstantNode(value) =>
+      s"<stringConstant> $value </stringConstant>".pure[List]
     case KeywordNode(value)        => 
       if (value.length == 1) s"<symbol> $value </symbol>".pure[List]
       else s"<keyword> $value </keyword>".pure[List]

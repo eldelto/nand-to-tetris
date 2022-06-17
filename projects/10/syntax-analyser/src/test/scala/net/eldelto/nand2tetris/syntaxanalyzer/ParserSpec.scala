@@ -56,8 +56,8 @@ class ParserSpec
       ),
       (
         IfStatement,
-        List(Keyword.If, Symbol.LeftParen, Keyword.True, Symbol.RightParen, Symbol.LeftCurly, Symbol.RightCurly),
-        List(IfStatementNode(List(KeywordNode("if"), KeywordNode("("), ExpressionNode(List(TermNode(List(KeywordNode("true"))))), KeywordNode(")"), KeywordNode("{"), StatementsNode(List()), KeywordNode("}"))))
+        List(Keyword.If, Symbol.LeftParen, Keyword.False, Symbol.RightParen, Symbol.LeftCurly, Symbol.RightCurly),
+        List(IfStatementNode(List(KeywordNode("if"), KeywordNode("("), ExpressionNode(List(TermNode(List(KeywordNode("false"))))), KeywordNode(")"), KeywordNode("{"), StatementsNode(List()), KeywordNode("}"))))
       ),
       (
         Term,

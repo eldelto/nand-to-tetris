@@ -9,6 +9,8 @@ import java.util.concurrent.ArrayBlockingQueue
 
 sealed trait ASTNode
 case class IdentifierNode(value: String) extends ASTNode
+case class IntegerConstantNode(value: Int) extends ASTNode
+case class StringConstantNode(value: String) extends ASTNode
 case class KeywordNode(value: String) extends ASTNode
 case class ClassNode(children: List[ASTNode]) extends ASTNode
 case class ClassVarDecNode(children: List[ASTNode]) extends ASTNode
@@ -174,13 +176,24 @@ object ExpectType {
     (parser: Parser) =>
       parser.getToken() match {
         case token: T =>
-          IdentifierNode(token.value).pure[List].asRight[Throwable]
+          tokenToAST(token).pure[List].asRight[Throwable]
         case token =>
           new IllegalArgumentException(
             s"Unexpected token type: Wanted $tt but got $token"
           )
             .asLeft[List[ASTNode]]
       }
+  }
+
+  private def tokenToAST(token: Token): ASTNode = {
+    val value = token.value
+    value.toIntOption
+    .map[ASTNode](IntegerConstantNode(_))
+    .orElse({
+      if (value.startsWith("\"")) Some(StringConstantNode(value.substring(1, value.length - 1)))
+      else None
+    })
+    .getOrElse(IdentifierNode(value))
   }
 }
 
