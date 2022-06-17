@@ -46,6 +46,9 @@ class ParserImpl(val tokens: List[Token]) extends Parser {
   override def getToken(): Token = {
     val token = tokenBuffer.get(bufferIndex + 1)
     println(s"getting to $token index=$bufferIndex")
+    if (token.isEmpty) {
+      throw new IllegalStateException("No token exists at index " + bufferIndex)
+    }
     token.get
   }
 
@@ -189,11 +192,11 @@ class ExpectToken[T <: Token](val expected: T) extends SyntaxRule {
     }
 }
 
-val Identifier = ExpectType[StringIdentifier]
-val TypeInt = ExpectToken(Keyword.Int)
-val TypeChar = ExpectToken(Keyword.Char)
-val TypeBoolean = ExpectToken(Keyword.Boolean)
-val Type = Or(TypeInt, TypeChar, TypeBoolean, Identifier)
+lazy val Identifier = ExpectType[StringIdentifier]
+lazy val TypeInt = ExpectToken(Keyword.Int)
+lazy val TypeChar = ExpectToken(Keyword.Char)
+lazy val TypeBoolean = ExpectToken(Keyword.Boolean)
+lazy val Type = Or(TypeInt, TypeChar, TypeBoolean, Identifier)
 
 object Class extends SyntaxRule {
   private val rule = Sequence(
@@ -248,7 +251,7 @@ object SubroutineDec extends SyntaxRule {
     ),
     Identifier,
     ExpectToken(Symbol.LeftParen),
-    Repeat(ParameterList),
+    ParameterList,
     ExpectToken(Symbol.RightParen),
     SubroutineBody
   )
@@ -261,14 +264,16 @@ object SubroutineDec extends SyntaxRule {
 }
 
 object ParameterList extends SyntaxRule {
-  private val rule = Sequence( // TODO: Implement Optional(...)
-    Type,
-    Identifier,
-    Repeat(
-      Sequence(
-        ExpectToken(Symbol.Comma),
-        Type,
-        Identifier
+  private val rule = Repeat(
+    Sequence( // TODO: Implement Optional(...)
+      Type,
+      Identifier,
+      Repeat(
+        Sequence(
+          ExpectToken(Symbol.Comma),
+          Type,
+          Identifier
+        )
       )
     )
   )
@@ -478,7 +483,7 @@ object Term extends SyntaxRule {
   }
 }
 
-val SubroutineCall = Or(
+lazy val SubroutineCall = Or(
   Sequence(
     Identifier,
     ExpectToken(Symbol.LeftParen),
@@ -515,7 +520,7 @@ object ExpressionList extends SyntaxRule {
   }
 }
 
-val Op = Or(
+lazy val Op = Or(
   ExpectToken(Symbol.Plus),
   ExpectToken(Symbol.Minus),
   ExpectToken(Symbol.Star),
@@ -527,12 +532,12 @@ val Op = Or(
   ExpectToken(Symbol.Equals)
 )
 
-val UnaryOp = Or(
+lazy val UnaryOp = Or(
   ExpectToken(Symbol.Minus),
   ExpectToken(Symbol.Tilde)
 )
 
-val KeywordConstant = Or(
+lazy val KeywordConstant = Or(
   ExpectToken(Keyword.True),
   ExpectToken(Keyword.False),
   ExpectToken(Keyword.Null),

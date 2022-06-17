@@ -13,7 +13,10 @@ lazy val root = (project in file("."))
 
     // Build
     assembly / mainClass := Some("net.eldelto.nand2tetris.syntaxanalyzer.Main"),
-    assembly / assemblyJarName := "vm-translator.jar"
+    assembly / assemblyJarName := "vm-translator.jar",
+
+    // Test
+    // Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oF")
   )
 
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.
