@@ -5,6 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import java.nio.file.Files
 import scala.jdk.StreamConverters._
+import java.nio.file.Path
 
 class XmlWriterSpec
     extends AnyFlatSpec
@@ -15,7 +16,7 @@ class XmlWriterSpec
     val testData = Table(
       ("jackFile", "expectedXml"),
       ("Minimal.jack", "Minimal.xml"),
-      // ("ExpressionLessSquare/Main.jack", "ExpressionLessSquare/Main.xml"),
+      ("ExpressionLessSquare/Main.jack", "ExpressionLessSquare/Main.xml"),
     )
 
     forAll(testData) { (jackFile, expectedXml) =>
@@ -25,11 +26,11 @@ class XmlWriterSpec
       val tokens = tokenize(jackFileSource.lines.toScala(List))
       val ast = Class.execute(new ParserImpl(tokens))
       val result = ast
-        .map(_.map(writeXml(_)).flatten)
+        .map(astToXml)
         .getOrElse(List())
         .reduce((a, b) => a + "\n" + b)
 
-      println(result)
+      // Files.writeString(Path.of("out.xml"), result)
       result shouldBe expectedXmlSource
     }
   }

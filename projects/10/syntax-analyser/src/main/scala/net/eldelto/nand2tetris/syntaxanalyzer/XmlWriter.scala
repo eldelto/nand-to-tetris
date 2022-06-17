@@ -2,6 +2,8 @@ package net.eldelto.nand2tetris.syntaxanalyzer
 
 import cats.implicits._
 
+def astToXml(ast:List[ASTNode]): List[String] = ast.map(writeXml).flatten
+
 def writeXml(node: ASTNode): List[String] = {
   node match {
     case IdentifierNode(value) =>
@@ -19,7 +21,7 @@ def writeXml(node: ASTNode): List[String] = {
     case SubroutineBodyNode(children) =>
       encloseChildren("subroutineBody", children)
     case StatementsNode(children)   => encloseChildren("statements", children)
-    case LetStatementNode(children) => encloseChildren("letStatment", children)
+    case LetStatementNode(children) => encloseChildren("letStatement", children)
     case IfStatementNode(children)  => encloseChildren("ifStatement", children)
     case WhileStatementNode(children) =>
       encloseChildren("whileStatement", children)
