@@ -14,7 +14,7 @@ class TokenizerSpec extends AnyFlatSpec with Matchers {
     // Comment
     class MyClass {
       field int x = 0; // Comment
-      field String y = "string constant"; // Comment
+      field String y = "string constant "; // Comment
     }"""
 
     val expected = List(
@@ -31,7 +31,7 @@ class TokenizerSpec extends AnyFlatSpec with Matchers {
       StringIdentifier("String"),
       StringIdentifier("y"),
       Symbol.Equals,
-      StringConstant("\"string constant\""),
+      StringConstant("\"string constant \""),
       Symbol.SemiColon,
       Symbol.RightCurly,
     )

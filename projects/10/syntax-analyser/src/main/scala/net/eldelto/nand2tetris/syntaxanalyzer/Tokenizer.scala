@@ -77,7 +77,9 @@ object StringConstant {
 
 case class StringIdentifier(value: String) extends Token
 object StringIdentifier {
-  def parse(rawValue: String): Option[StringIdentifier] = StringIdentifier(rawValue).some
+  def parse(rawValue: String): Option[StringIdentifier] = StringIdentifier(
+    rawValue
+  ).some
 }
 
 def parseNonSymbol(rawValue: String): Token = Keyword
@@ -86,13 +88,15 @@ def parseNonSymbol(rawValue: String): Token = Keyword
   .orElse(StringConstant.parse(rawValue))
   .orElse(StringIdentifier.parse(rawValue))
   .getOrElse(
-    throw IllegalArgumentException(s"'$rawValue' is not a valid StringIdentifier")
+    throw IllegalArgumentException(
+      s"'$rawValue' is not a valid StringIdentifier"
+    )
   )
 
 def tokenize(inputLines: List[String]): List[Token] = {
   val charList = filterComments(inputLines)
-  .map(_.toList)
-  .flatten
+    .map(_.toList)
+    .flatten
 
   val tokens = parseTokens(charList)
   return combineStringConstants(tokens)
@@ -100,54 +104,66 @@ def tokenize(inputLines: List[String]): List[Token] = {
 
 private def filterComments(inputLines: List[String]): List[String] = {
   var isBlockComment = false
-  inputLines.map(_.split("//").head)
-  .filter{ line =>
-    val containsStart = line.contains("/*")
-    val containsEnd = line.contains("*/")
-    if (containsStart) isBlockComment = true
-    if (containsEnd) isBlockComment = false
-    !(isBlockComment | containsStart | containsEnd)
-  }
+  inputLines
+    .map(_.split("//").head)
+    .filter { line =>
+      val containsStart = line.contains("/*")
+      val containsEnd = line.contains("*/")
+      if (containsStart) isBlockComment = true
+      if (containsEnd) isBlockComment = false
+      !(isBlockComment | containsStart | containsEnd)
+    }
 }
 
 private def parseTokens(input: List[Char]): List[Token] = {
   var tokenBuffer: String = ""
-  return input.map { char =>
-    if (char == ' ') {
-      val tokens = LazyList(parseNonSymbol(tokenBuffer))
-      tokenBuffer = ""
-      tokens
-    } else {
-      Symbol.parse(char.toString) match {
-        case Some(symbolToken) =>
-          val tokens = LazyList(parseNonSymbol(tokenBuffer), symbolToken)
-          tokenBuffer = ""
-          tokens
-        case None =>
-          tokenBuffer += char
-          LazyList()
+  return input
+    .map { char =>
+      if (char == ' ') {
+        val tokens = LazyList(parseNonSymbol(tokenBuffer))
+        tokenBuffer = ""
+        tokens
+      } else {
+        Symbol.parse(char.toString) match {
+          case Some(symbolToken) =>
+            val tokens = LazyList(parseNonSymbol(tokenBuffer), symbolToken)
+            tokenBuffer = ""
+            tokens
+          case None =>
+            tokenBuffer += char
+            LazyList()
+        }
       }
     }
-  }.flatten
-  .filter(_.value.trim.nonEmpty)
+    .flatten
+    .filter(_.value.trim.nonEmpty)
 }
 
 private def combineStringConstants(tokens: List[Token]): List[Token] = {
   var isStringConstant = false
   var stringConstant = ""
   val result: ListBuffer[Token] = ListBuffer()
-  for(token <- tokens) {
+  for (token <- tokens) {
     token match {
-      case StringIdentifier(value) if value.startsWith("\"") => 
+      case StringIdentifier(value) if value.startsWith("\"") =>
         isStringConstant = true
         stringConstant = value
-       case StringIdentifier(value) if value.endsWith("\"") => 
+      case StringIdentifier(value) if value.endsWith("\"") =>
         isStringConstant = false
         stringConstant = stringConstant + " " + value
         result.addOne(StringConstant(stringConstant))
-      case _ if isStringConstant => stringConstant = stringConstant + " " + token.value
+      case StringConstant(value) if value == "\"" =>
+        if (isStringConstant) {
+          stringConstant = stringConstant + " \""
+          result.addOne(StringConstant(stringConstant))
+        } else {
+          stringConstant = "\" "
+        }
+        isStringConstant = !isStringConstant
+      case _ if isStringConstant =>
+        stringConstant = stringConstant + " " + token.value
       case _ => result.addOne(token)
-    } 
+    }
   }
 
   return result.toList

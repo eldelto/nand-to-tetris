@@ -79,6 +79,16 @@ class ParserSpec
         List(Keyword.True),
         List(KeywordNode("true"))
       ),
+      (
+        ExpressionList,
+        List(StringConstant("\"value\"")),
+        List(ExpressionListNode(List(ExpressionNode(List(TermNode(List(StringConstantNode("value"))))))))
+      ),
+      (
+        SubroutineCall,
+        List(StringIdentifier("Object"), Symbol.Period, StringIdentifier("function"), Symbol.LeftParen, StringConstant("\"value \""), Symbol.RightParen),
+        List(IdentifierNode("Object"), KeywordNode("."), IdentifierNode("function"), KeywordNode("("), ExpressionListNode(List(ExpressionNode(List(TermNode(List(StringConstantNode("value "))))))), KeywordNode(")"))
+      ),
     )
 
     forAll(testData) { (rule, tokens, expected) =>
