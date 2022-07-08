@@ -2,9 +2,12 @@ package net.eldelto.nand2tetris.jackcompiler
 
 import cats.implicits._
 import org.apache.commons.text.StringEscapeUtils
+import scala.collection.mutable.ListBuffer
 
 class CodeGenerator {
   private val symbolTable = SymbolTable()
+
+  def generate(nodes: List[ASTNode]): List[String] = nodes.flatMap(generate)
 
   def generate(node: ASTNode): List[String] = {
     node match {
@@ -47,8 +50,7 @@ class CodeGenerator {
       case ReturnStatementNode(children) =>
         encloseChildren("returnStatement", children)
       case ExpressionNode(children)  => encloseChildren("expression", children)
-      case GenericTermNode(children) => encloseChildren("term", children)
-      case PriorityTermNode(expression) => encloseChildren("term", expression.pure[List])
+      case n: TermNode => resolveTerm(n)
       case ExpressionListNode(children) =>
         encloseChildren("expressionList", children)
     }
@@ -62,3 +64,42 @@ private def encloseChildren(
   s"<$tagName>".pure[List] ++
     children.map(writeXml(_)).flatten ++
     s"</$tagName>".pure[List]
+
+private def resolveExpression(expression: ExpressionNode): List[String] =  expression.children.length match {
+    case 1 => resolveTerm(expression.children(0).asInstanceOf[TermNode])
+    case _ => infixToPostfixNotation(expression.children).flatMap( _ match {
+      case ops: KeywordNode => resolveOps(ops).pure[List]
+      case term: TermNode => resolveTerm(term)
+      case node => throw IllegalStateException(s"Not a valid expression node: $node")
+    })
+}
+
+private def resolveTerm(term: TermNode): List[String] = term match {
+  case LiteralTermNode(literal) => resolveLiteral(literal).pure[List]
+  case PriorityTermNode(expression) => resolveExpression(expression)
+  case t: GenericTermNode => List() // TODO: Figure out what to do here.
+}
+
+private def resolveLiteral(literal: LiteralNode): String = literal match {
+  case IntegerConstantNode(value) => s"push $value"
+  case StringConstantNode(value) => "" // TODO: Allocate new String.
+  case KeywordNode(value) => "" // TODO: Handle different keywords.
+}
+
+private def resolveOps(node: KeywordNode): String = node match {
+  case KeywordNode("+") => "add"
+  case KeywordNode("*") => "multiply"
+  case _ => "" // TODO: Handle other operations.
+}
+
+private def infixToPostfixNotation(nodes: List[ASTNode]): List[ASTNode] = {
+  val result = ListBuffer(nodes.head)
+  var i = 2
+  while(i < nodes.length) {
+    result.append(nodes(i))
+    result.append(nodes(i-1))
+    i += 2
+  }
+
+  result.toList
+}
