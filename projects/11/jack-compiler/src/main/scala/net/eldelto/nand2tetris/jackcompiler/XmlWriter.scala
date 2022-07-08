@@ -34,7 +34,8 @@ def writeXml(node: ASTNode): List[String] = {
     case ReturnStatementNode(children) =>
       encloseChildren("returnStatement", children)
     case ExpressionNode(children) => encloseChildren("expression", children)
-    case TermNode(children)       => encloseChildren("term", children)
+    case GenericTermNode(children)       => encloseChildren("term", children)
+    case PriorityTermNode(expression)       => encloseChildren("term", expression.pure[List])
     case ExpressionListNode(children) =>
       encloseChildren("expressionList", children)
   }

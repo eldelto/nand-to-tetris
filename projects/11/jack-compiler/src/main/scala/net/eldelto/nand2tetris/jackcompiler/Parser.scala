@@ -23,9 +23,12 @@ case class SingleVariableDec(name: String, valueType: String, variableType: Vari
 
 sealed trait ASTNode
 case class IdentifierNode(value: String) extends ASTNode
-case class IntegerConstantNode(value: Int) extends ASTNode
-case class StringConstantNode(value: String) extends ASTNode
-case class KeywordNode(value: String) extends ASTNode
+
+trait LiteralNode extends ASTNode
+case class IntegerConstantNode(value: Int) extends LiteralNode
+case class StringConstantNode(value: String) extends LiteralNode
+case class KeywordNode(value: String) extends LiteralNode
+
 case class ClassNode(name: String, children: List[ASTNode]) extends ASTNode
 case class ClassVarDecNode(declarations: List[SingleVariableDec], children: List[ASTNode]) extends ASTNode
 case class VarDecNode(declarations: List[SingleVariableDec], children: List[ASTNode]) extends ASTNode
@@ -39,8 +42,12 @@ case class WhileStatementNode(children: List[ASTNode]) extends ASTNode
 case class DoStatementNode(children: List[ASTNode]) extends ASTNode
 case class ReturnStatementNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionNode(children: List[ASTNode]) extends ASTNode
-case class TermNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionListNode(children: List[ASTNode]) extends ASTNode
+
+trait TermNode extends ASTNode
+case class PriorityTermNode(expression: ExpressionNode) extends TermNode
+case class LiteralTermNode(literal: LiteralNode) extends TermNode
+case class GenericTermNode(children: List[ASTNode]) extends TermNode
 
 trait Parser {
   def getToken(): Token
@@ -524,20 +531,24 @@ object Expression extends SyntaxRule {
 object Term extends SyntaxRule {
   private val rule = Or(
     SubroutineCall,
+    // Array
     Sequence(
       Identifier,
       ExpectToken(Symbol.LeftBracket),
       Expression,
       ExpectToken(Symbol.RightBracket)
     ),
+    // Priority term
     Sequence(
       ExpectToken(Symbol.LeftParen),
       Expression,
       ExpectToken(Symbol.RightParen)
     ),
+    // Literals
     ExpectType[IntConstant],
     ExpectType[StringConstant],
     KeywordConstant,
+    // Unary term
     Identifier,
     Sequence(
       UnaryOp,
@@ -547,7 +558,13 @@ object Term extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      TermNode(nodes).pure[List]
+      val result = nodes(0) match {
+        case KeywordNode("(") => PriorityTermNode(nodes(1).asInstanceOf[ExpressionNode])
+        case n: (IntegerConstantNode | StringConstantNode | KeywordNode) => LiteralTermNode(n)
+        case _ => GenericTermNode(nodes)
+      }
+
+      result.pure[List]
     }
   }
 }

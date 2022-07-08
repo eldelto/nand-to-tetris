@@ -24,10 +24,10 @@ class CodeGenerator {
           s"<keyword> ${StringEscapeUtils.escapeXml11(value)} </keyword>"
             .pure[List]
       case ClassNode(_, children) => encloseChildren("class", children)
-      case ClassVarDecNode(declarations, children) => 
+      case ClassVarDecNode(declarations, children) =>
         declarations.foreach(symbolTable.addClassDeclaration(_))
         List()
-      case VarDecNode(declarations, children) => 
+      case VarDecNode(declarations, children) =>
         declarations.foreach(symbolTable.addSubroutineDeclaration(_))
         List()
       case SubroutineDecNode(_, _, _, _, children) =>
@@ -46,8 +46,9 @@ class CodeGenerator {
       case DoStatementNode(children) => encloseChildren("doStatement", children)
       case ReturnStatementNode(children) =>
         encloseChildren("returnStatement", children)
-      case ExpressionNode(children) => encloseChildren("expression", children)
-      case TermNode(children)       => encloseChildren("term", children)
+      case ExpressionNode(children)  => encloseChildren("expression", children)
+      case GenericTermNode(children) => encloseChildren("term", children)
+      case PriorityTermNode(expression) => encloseChildren("term", expression.pure[List])
       case ExpressionListNode(children) =>
         encloseChildren("expressionList", children)
     }

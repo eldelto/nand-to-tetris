@@ -57,22 +57,22 @@ class ParserSpec
       (
         IfStatement,
         List(Keyword.If, Symbol.LeftParen, Keyword.False, Symbol.RightParen, Symbol.LeftCurly, Symbol.RightCurly),
-        List(IfStatementNode(List(KeywordNode("if"), KeywordNode("("), ExpressionNode(List(TermNode(List(KeywordNode("false"))))), KeywordNode(")"), KeywordNode("{"), StatementsNode(List()), KeywordNode("}"))))
+        List(IfStatementNode(List(KeywordNode("if"), KeywordNode("("), ExpressionNode(List(LiteralTermNode(KeywordNode("false")))), KeywordNode(")"), KeywordNode("{"), StatementsNode(List()), KeywordNode("}"))))
       ),
       (
         Term,
         List(Keyword.True),
-        List(TermNode(List(KeywordNode("true"))))
+        List(LiteralTermNode(KeywordNode("true")))
       ),
       (
         Expression,
         List(StringIdentifier("a"), Symbol.Plus, StringIdentifier("b")),
-        List(ExpressionNode(List(TermNode(List(IdentifierNode("a"))), KeywordNode("+"), TermNode(List(IdentifierNode("b"))))))
+        List(ExpressionNode(List(GenericTermNode(List(IdentifierNode("a"))), KeywordNode("+"), GenericTermNode(List(IdentifierNode("b"))))))
       ),
       (
         Expression,
         List(Keyword.True),
-        List(ExpressionNode(List(TermNode(List(KeywordNode("true"))))))
+        List(ExpressionNode(List(LiteralTermNode(KeywordNode("true")))))
       ),
       (
         Sequence(ExpectToken(Keyword.True), Repeat(ExpectToken(Keyword.False))),
@@ -82,14 +82,42 @@ class ParserSpec
       (
         ExpressionList,
         List(StringConstant("\"value\"")),
-        List(ExpressionListNode(List(ExpressionNode(List(TermNode(List(StringConstantNode("value"))))))))
+        List(ExpressionListNode(List(ExpressionNode(List(LiteralTermNode(StringConstantNode("value")))))))
       ),
       (
         SubroutineCall,
         List(StringIdentifier("Object"), Symbol.Period, StringIdentifier("function"), Symbol.LeftParen, StringConstant("\"value \""), Symbol.RightParen),
-        List(IdentifierNode("Object"), KeywordNode("."), IdentifierNode("function"), KeywordNode("("), ExpressionListNode(List(ExpressionNode(List(TermNode(List(StringConstantNode("value "))))))), KeywordNode(")"))
+        List(IdentifierNode("Object"), KeywordNode("."), IdentifierNode("function"), KeywordNode("("), ExpressionListNode(List(ExpressionNode(List(LiteralTermNode(StringConstantNode("value ")))))), KeywordNode(")"))
+      ),
+      (
+        Expression,
+        List(Symbol.LeftParen, IntConstant("3"), Symbol.Star, IntConstant("2"), Symbol.RightParen, Symbol.Plus, IntConstant("1")),
+        List(ExpressionNode(List(PriorityTermNode(ExpressionNode(List(LiteralTermNode(IntegerConstantNode(3)), KeywordNode("*"), LiteralTermNode(IntegerConstantNode(2))))), KeywordNode("+"), LiteralTermNode(IntegerConstantNode(1)))))
       ),
     )
+
+    /* Resolving Expressions
+
+      (3*2)+1
+
+      Expression(PriorityTerm(Expression(Term(3), Ops(*), Term(2)))), Ops(+), Term(1))
+
+      For each term call resolveTerm(term) which will handle the priority term first:
+      Expression(PriorityTerm(Expression(IntConstant(3), Symbol(*), IntConstant(2)))), Ops(+), Term(1))
+
+      Resolve expression:
+      Expression(PriorityTerm(Expression(IntConstant(3), Symbol(*), IntConstant(2)))), Ops(+), Term(1))
+
+      push 3
+      push 2
+      multiply
+
+      Expression(5, Ops(+), Term(1))
+
+      push 1
+      add
+
+    */
 
     forAll(testData) { (rule, tokens, expected) =>
       val result = rule.execute(new ParserImpl(tokens))
