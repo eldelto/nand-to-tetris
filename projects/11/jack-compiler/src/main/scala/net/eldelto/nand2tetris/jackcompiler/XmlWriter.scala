@@ -30,7 +30,7 @@ def writeXml(node: ASTNode): List[String] = {
     case IfStatementNode(children)  => encloseChildren("ifStatement", children)
     case WhileStatementNode(children) =>
       encloseChildren("whileStatement", children)
-    case DoStatementNode(children) => encloseChildren("doStatement", children)
+    case DoStatementNode(_, _, children) => encloseChildren("doStatement", children)
     case ReturnStatementNode(children) =>
       encloseChildren("returnStatement", children)
     case ExpressionNode(children) => encloseChildren("expression", children)

@@ -11,22 +11,15 @@ class CodeGenerator {
 
   def generate(node: ASTNode): List[String] = {
     node match {
-      case IdentifierNode(value) =>
-        s"<identifier> ${StringEscapeUtils.escapeXml11(value)} </identifier>"
-          .pure[List]
-      case IntegerConstantNode(value) =>
-        s"<integerConstant> $value </integerConstant>".pure[List]
-      case StringConstantNode(value) =>
-        s"<stringConstant> ${StringEscapeUtils.escapeXml11(value)} </stringConstant>"
-          .pure[List]
+      case IdentifierNode(value) => List()
+      case IntegerConstantNode(value) => List()
+      case StringConstantNode(value) => List()
       case KeywordNode(value) =>
         if (value.length == 1)
-          s"<symbol> ${StringEscapeUtils.escapeXml11(value)} </symbol>"
-            .pure[List]
+          List()
         else
-          s"<keyword> ${StringEscapeUtils.escapeXml11(value)} </keyword>"
-            .pure[List]
-      case ClassNode(_, children) => encloseChildren("class", children)
+          List()
+      case ClassNode(_, children) => generate(children)
       case ClassVarDecNode(declarations, children) =>
         declarations.foreach(symbolTable.addClassDeclaration(_))
         List()
@@ -35,35 +28,26 @@ class CodeGenerator {
         List()
       case SubroutineDecNode(_, _, _, _, children) =>
         symbolTable.clearSubroutineTable()
-        List()
-      case ParameterListNode(children) =>
-        encloseChildren("parameterList", children)
-      case SubroutineBodyNode(children) =>
-        encloseChildren("subroutineBody", children)
-      case StatementsNode(children) => encloseChildren("statements", children)
-      case LetStatementNode(children) =>
-        encloseChildren("letStatement", children)
-      case IfStatementNode(children) => encloseChildren("ifStatement", children)
-      case WhileStatementNode(children) =>
-        encloseChildren("whileStatement", children)
-      case DoStatementNode(children) => encloseChildren("doStatement", children)
-      case ReturnStatementNode(children) =>
-        encloseChildren("returnStatement", children)
-      case ExpressionNode(children)  => encloseChildren("expression", children)
+        generate(children)
+      case ParameterListNode(children) => generate(children)
+      case SubroutineBodyNode(children) => generate(children)
+      case StatementsNode(children) => generate(children)
+      case LetStatementNode(children) => generate(children)
+      case IfStatementNode(children) => generate(children)
+      case WhileStatementNode(children) => generate(children)
+      case n @ DoStatementNode(_, _, children) => generate(children) ++ resolveDoStatement(n)
+      case ReturnStatementNode(children) => generate(children)
+      case n: ExpressionNode  => resolveExpression(n)
       case n: TermNode => resolveTerm(n)
       case ExpressionListNode(children) =>
-        encloseChildren("expressionList", children)
+        generate(children)
+      case _ => List()
     }
   }
 }
 
-private def encloseChildren(
-    tagName: String,
-    children: List[ASTNode]
-): List[String] =
-  s"<$tagName>".pure[List] ++
-    children.map(writeXml(_)).flatten ++
-    s"</$tagName>".pure[List]
+private def encloseChildren(tagName: String,children: List[ASTNode]): List[String] = List()
+  
 
 private def resolveExpression(expression: ExpressionNode): List[String] =  expression.children.length match {
     case 1 => resolveTerm(expression.children(0).asInstanceOf[TermNode])
@@ -81,15 +65,15 @@ private def resolveTerm(term: TermNode): List[String] = term match {
 }
 
 private def resolveLiteral(literal: LiteralNode): String = literal match {
-  case IntegerConstantNode(value) => s"push $value"
+  case IntegerConstantNode(value) => s"push constant $value"
   case StringConstantNode(value) => "" // TODO: Allocate new String.
   case KeywordNode(value) => "" // TODO: Handle different keywords.
 }
 
 private def resolveOps(node: KeywordNode): String = node match {
   case KeywordNode("+") => "add"
-  case KeywordNode("*") => "multiply"
-  case _ => "" // TODO: Handle other operations.
+  case KeywordNode("*") => "call Math.multiply 2"
+  case _ => "<tbd>" // TODO: Handle other operations.
 }
 
 private def infixToPostfixNotation(nodes: List[ASTNode]): List[ASTNode] = {
@@ -102,4 +86,9 @@ private def infixToPostfixNotation(nodes: List[ASTNode]): List[ASTNode] = {
   }
 
   result.toList
+}
+
+private def resolveDoStatement(node: DoStatementNode): List[String] = {
+  val parameterCount = node.parameters.children.size
+  List(s"call ${node.calleeName} ${parameterCount}", "pop")
 }

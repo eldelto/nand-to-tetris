@@ -2,10 +2,11 @@ package net.eldelto.nand2tetris.jackcompiler
 
 import scala.reflect.TypeTest
 import cats.data.EitherT
-import cats.implicits._
+import cats.implicits.*
 import scala.collection.mutable.Stack
 import java.util.Queue
 import java.util.concurrent.ArrayBlockingQueue
+import scala.util.control.Breaks.*
 
 enum VariableType {
   case Local
@@ -39,7 +40,7 @@ case class StatementsNode(children: List[ASTNode]) extends ASTNode
 case class LetStatementNode(children: List[ASTNode]) extends ASTNode
 case class IfStatementNode(children: List[ASTNode]) extends ASTNode
 case class WhileStatementNode(children: List[ASTNode]) extends ASTNode
-case class DoStatementNode(children: List[ASTNode]) extends ASTNode
+case class DoStatementNode(calleeName: String, parameters: ExpressionListNode, children: List[ASTNode]) extends ASTNode
 case class ReturnStatementNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionListNode(children: List[ASTNode]) extends ASTNode
@@ -489,7 +490,21 @@ object DoStatement extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      DoStatementNode(nodes).pure[List]
+      var calleeName = ""
+      var i = 0
+      breakable {
+        for (node <- nodes.tail) {
+          i = i + 1
+          node match {
+            case IdentifierNode(value) => calleeName = calleeName + value
+            case KeywordNode(".") => calleeName = calleeName + "."
+            case _ => break
+          }
+        }
+      }
+
+      val parameters = nodes(i+1).asInstanceOf[ExpressionListNode]
+      DoStatementNode(calleeName, parameters, nodes).pure[List]
     }
   }
 }
