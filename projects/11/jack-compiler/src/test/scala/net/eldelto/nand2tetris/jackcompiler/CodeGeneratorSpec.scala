@@ -11,15 +11,21 @@ class CodeGeneratorSpec
   "The code generator" should "generate the proper VM code" in {
     val testData = Table[List[ASTNode], List[String]](
       ("AST nodes", "VM code"),
-      (List(LiteralTermNode(IntegerConstantNode(1))), List("push 1")),
-      (List(PriorityTermNode(
-          ExpressionNode(List(
-            LiteralTermNode(IntegerConstantNode(1)),
-            KeywordNode("+"),
-            LiteralTermNode(IntegerConstantNode(2)),
-          ))
-        )),
-        List("push 1", "push 2", "add")),
+      (List(LiteralTermNode(IntegerConstantNode(1))), List("push constant 1")),
+      (
+        List(
+          PriorityTermNode(
+            ExpressionNode(
+              List(
+                LiteralTermNode(IntegerConstantNode(1)),
+                KeywordNode("+"),
+                LiteralTermNode(IntegerConstantNode(2))
+              )
+            )
+          )
+        ),
+        List("push constant 1", "push constant 2", "add")
+      )
     )
 
     forAll(testData) { (nodes, expected) =>

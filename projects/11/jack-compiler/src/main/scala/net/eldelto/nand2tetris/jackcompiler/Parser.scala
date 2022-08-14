@@ -20,7 +20,11 @@ enum SubroutineType {
   case Method
 }
 
-case class SingleVariableDec(name: String, valueType: String, variableType: VariableType)
+case class SingleVariableDec(
+    name: String,
+    valueType: String,
+    variableType: VariableType
+)
 
 sealed trait ASTNode
 case class IdentifierNode(value: String) extends ASTNode
@@ -31,16 +35,32 @@ case class StringConstantNode(value: String) extends LiteralNode
 case class KeywordNode(value: String) extends LiteralNode
 
 case class ClassNode(name: String, children: List[ASTNode]) extends ASTNode
-case class ClassVarDecNode(declarations: List[SingleVariableDec], children: List[ASTNode]) extends ASTNode
-case class VarDecNode(declarations: List[SingleVariableDec], children: List[ASTNode]) extends ASTNode
-case class SubroutineDecNode(routineType: SubroutineType, name: String, returnType: String, parameters: ParameterListNode, children: List[ASTNode]) extends ASTNode
+case class ClassVarDecNode(
+    declarations: List[SingleVariableDec],
+    children: List[ASTNode]
+) extends ASTNode
+case class VarDecNode(
+    declarations: List[SingleVariableDec],
+    children: List[ASTNode]
+) extends ASTNode
+case class SubroutineDecNode(
+    routineType: SubroutineType,
+    name: String,
+    returnType: String,
+    parameters: ParameterListNode,
+    children: List[ASTNode]
+) extends ASTNode
 case class ParameterListNode(children: List[ASTNode]) extends ASTNode
 case class SubroutineBodyNode(children: List[ASTNode]) extends ASTNode
 case class StatementsNode(children: List[ASTNode]) extends ASTNode
 case class LetStatementNode(children: List[ASTNode]) extends ASTNode
 case class IfStatementNode(children: List[ASTNode]) extends ASTNode
 case class WhileStatementNode(children: List[ASTNode]) extends ASTNode
-case class DoStatementNode(calleeName: String, parameters: ExpressionListNode, children: List[ASTNode]) extends ASTNode
+case class DoStatementNode(
+    calleeName: String,
+    parameters: ExpressionListNode,
+    children: List[ASTNode]
+) extends ASTNode
 case class ReturnStatementNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionListNode(children: List[ASTNode]) extends ASTNode
@@ -193,12 +213,13 @@ object ExpectType {
   private def tokenToAST(token: Token): ASTNode = {
     val value = token.value
     value.toIntOption
-    .map[ASTNode](IntegerConstantNode(_))
-    .orElse({
-      if (value.startsWith("\"")) Some(StringConstantNode(value.substring(1, value.length - 1)))
-      else None
-    })
-    .getOrElse(IdentifierNode(value))
+      .map[ASTNode](IntegerConstantNode(_))
+      .orElse({
+        if (value.startsWith("\""))
+          Some(StringConstantNode(value.substring(1, value.length - 1)))
+        else None
+      })
+      .getOrElse(IdentifierNode(value))
   }
 }
 
@@ -260,12 +281,12 @@ object ClassVarDec extends SyntaxRule {
       val variableTypeValue = nodes(0).asInstanceOf[KeywordNode].value
       val variableType = variableTypeValue match {
         case Keyword.Static.value => VariableType.Static
-        case Keyword.Field.value => VariableType.Field
+        case Keyword.Field.value  => VariableType.Field
       }
 
       val valueType = nodes(1) match {
-        case n: IdentifierNode => n.value 
-        case n: KeywordNode => n.value
+        case n: IdentifierNode => n.value
+        case n: KeywordNode    => n.value
         case _ => throw new IllegalStateException("Unexpected node")
       }
 
@@ -300,25 +321,26 @@ object SubroutineDec extends SyntaxRule {
     rule.execute(parser).map { nodes =>
       val typeValue = nodes(0) match {
         case n: IdentifierNode => n.value
-        case n: KeywordNode => n.value
+        case n: KeywordNode    => n.value
         case _ => throw new IllegalStateException("Unexpected node")
       }
       val routineType = typeValue match {
         case Keyword.Constructor.value => SubroutineType.Constructor
-        case Keyword.Function.value => SubroutineType.Function
-        case Keyword.Method.value => SubroutineType.Method
+        case Keyword.Function.value    => SubroutineType.Function
+        case Keyword.Method.value      => SubroutineType.Method
       }
 
       val returnType = nodes(1) match {
         case n: IdentifierNode => n.value
-        case n: KeywordNode => n.value
+        case n: KeywordNode    => n.value
         case _ => throw new IllegalStateException("Unexpected node")
       }
 
       val name = nodes(2).asInstanceOf[IdentifierNode].value
       val parameterList = nodes(4).asInstanceOf[ParameterListNode]
 
-      SubroutineDecNode(routineType, name, returnType, parameterList, nodes).pure[List]
+      SubroutineDecNode(routineType, name, returnType, parameterList, nodes)
+        .pure[List]
     }
   }
 }
@@ -382,8 +404,8 @@ object VarDec extends SyntaxRule {
       }
 
       val valueType = nodes(1) match {
-        case n: IdentifierNode => n.value 
-        case n: KeywordNode => n.value
+        case n: IdentifierNode => n.value
+        case n: KeywordNode    => n.value
         case _ => throw new IllegalStateException("Unexpected node")
       }
 
@@ -497,13 +519,13 @@ object DoStatement extends SyntaxRule {
           i = i + 1
           node match {
             case IdentifierNode(value) => calleeName = calleeName + value
-            case KeywordNode(".") => calleeName = calleeName + "."
-            case _ => break
+            case KeywordNode(".")      => calleeName = calleeName + "."
+            case _                     => break
           }
         }
       }
 
-      val parameters = nodes(i+1).asInstanceOf[ExpressionListNode]
+      val parameters = nodes(i + 1).asInstanceOf[ExpressionListNode]
       DoStatementNode(calleeName, parameters, nodes).pure[List]
     }
   }
@@ -520,7 +542,7 @@ object ReturnStatement extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      ReturnStatementNode(nodes).pure[List]
+      ReturnStatementNode(nodes.tail).pure[List]
     }
   }
 }
@@ -574,8 +596,10 @@ object Term extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
       val result = nodes(0) match {
-        case KeywordNode("(") => PriorityTermNode(nodes(1).asInstanceOf[ExpressionNode])
-        case n: (IntegerConstantNode | StringConstantNode | KeywordNode) => LiteralTermNode(n)
+        case KeywordNode("(") =>
+          PriorityTermNode(nodes(1).asInstanceOf[ExpressionNode])
+        case n: (IntegerConstantNode | StringConstantNode | KeywordNode) =>
+          LiteralTermNode(n)
         case _ => GenericTermNode(nodes)
       }
 

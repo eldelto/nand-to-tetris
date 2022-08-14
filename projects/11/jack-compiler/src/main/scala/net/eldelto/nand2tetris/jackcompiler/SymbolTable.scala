@@ -5,14 +5,18 @@ import scala.collection.mutable.HashMap
 case class SymbolEntry(declaration: SingleVariableDec, index: Int)
 
 class SymbolTable {
-    private val classTable = HashMap[String, SymbolEntry]()
-    private val subroutineTable = HashMap[String, SymbolEntry]()
+  var className = ""
+  private val classTable = HashMap[String, SymbolEntry]()
+  private val subroutineTable = HashMap[String, SymbolEntry]()
 
-    def addClassDeclaration(declaration: SingleVariableDec) = classTable.put(declaration.name, SymbolEntry(declaration, classTable.size))
+  def addClassDeclaration(declaration: SingleVariableDec) =
+    classTable.put(declaration.name, SymbolEntry(declaration, classTable.size))
 
-    def addSubroutineDeclaration(declaration: SingleVariableDec) = subroutineTable.put(declaration.name, SymbolEntry(declaration, subroutineTable.size))
+  def addSubroutineDeclaration(declaration: SingleVariableDec) = subroutineTable
+    .put(declaration.name, SymbolEntry(declaration, subroutineTable.size))
 
-    def getSymbol(name: String) = subroutineTable.get(name).orElse(classTable.get(name)).get
+  def getSymbol(name: String) =
+    subroutineTable.get(name).orElse(classTable.get(name)).get
 
-    def clearSubroutineTable() = subroutineTable.clear()
+  def clearSubroutineTable() = subroutineTable.clear()
 }
