@@ -46,7 +46,7 @@ push constant 0
 pop local 2
 push local 2
 push local 1
-tbd '<'
+lt
 push local 2
 push constant 16
 call String.new 1

@@ -76,7 +76,7 @@ class CodeGenerator {
   private def resolveLiteral(literal: LiteralNode): List[String] = literal match {
     case IntegerConstantNode(value) => List(s"push constant $value")
     case StringConstantNode(value)  => resolveStringConstant(value)
-    case KeywordNode(value)         => List(s"tbd 81 '$value'") // TODO: Handle different keywords.
+    case KeywordNode(value)         => List(s"tbd '$value'") // TODO: Handle different keywords.
   }
 
   private def resolveIdentifier(identifier: String): List[String] = {
@@ -88,6 +88,8 @@ class CodeGenerator {
     case KeywordNode("+") => "add"
     case KeywordNode("*") => "call Math.multiply 2"
     case KeywordNode("/") => "call Math.divide 2"
+    case KeywordNode("<") => "lt"
+    case KeywordNode(">") => "gt"
     case KeywordNode(k)   => s"tbd '$k'" // TODO: Handle other operations.
   }
 
@@ -119,6 +121,7 @@ class CodeGenerator {
       name: String,
       parameters: ParameterListNode
   ): List[String] = {
+    // TODO: Fix parameter count.
     val parametercount = parameters.children.length
 
     routineType match {
