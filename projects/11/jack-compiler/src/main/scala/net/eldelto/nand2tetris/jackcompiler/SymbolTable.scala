@@ -9,14 +9,14 @@ class SymbolTable {
   private val classTable = HashMap[String, SymbolEntry]()
   private val subroutineTable = HashMap[String, SymbolEntry]()
 
-  def addClassDeclaration(declaration: SingleVariableDec) =
+  def addClassDeclaration(declaration: SingleVariableDec): Unit =
     classTable.put(declaration.name, SymbolEntry(declaration, classTable.size))
 
-  def addSubroutineDeclaration(declaration: SingleVariableDec) = subroutineTable
+  def addSubroutineDeclaration(declaration: SingleVariableDec): Unit = subroutineTable
     .put(declaration.name, SymbolEntry(declaration, subroutineTable.size))
 
-  def getSymbol(name: String) =
+  def getSymbol(name: String): SymbolEntry =
     subroutineTable.get(name).orElse(classTable.get(name)).get
 
-  def clearSubroutineTable() = subroutineTable.clear()
+  def clearSubroutineTable(): Unit = subroutineTable.clear()
 }

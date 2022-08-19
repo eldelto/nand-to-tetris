@@ -53,7 +53,7 @@ case class SubroutineDecNode(
 case class ParameterListNode(children: List[ASTNode]) extends ASTNode
 case class SubroutineBodyNode(children: List[ASTNode]) extends ASTNode
 case class StatementsNode(children: List[ASTNode]) extends ASTNode
-case class LetStatementNode(children: List[ASTNode]) extends ASTNode
+case class LetStatementNode(variableName: String, children: List[ASTNode]) extends ASTNode
 case class IfStatementNode(children: List[ASTNode]) extends ASTNode
 case class WhileStatementNode(children: List[ASTNode]) extends ASTNode
 case class SubroutineCallNode(calleeName: String, parameters: ExpressionListNode, children: List[ASTNode]) extends ASTNode
@@ -65,6 +65,7 @@ case class ExpressionListNode(children: List[ASTNode]) extends ASTNode
 trait TermNode extends ASTNode
 case class PriorityTermNode(expression: ExpressionNode) extends TermNode
 case class LiteralTermNode(literal: LiteralNode) extends TermNode
+case class IdentifierTermNode(identifier: String) extends TermNode
 case class GenericTermNode(children: List[ASTNode]) extends TermNode
 
 trait Parser {
@@ -407,8 +408,17 @@ object VarDec extends SyntaxRule {
       }
 
       // TODO: Handle multiple variable declarations in one statement.
-      val name = nodes(2).asInstanceOf[IdentifierNode].value
-      val declarations = List(SingleVariableDec(name, valueType, variableType))
+      var declarations: List[SingleVariableDec] = List()
+      var i = 2
+      breakable {
+        for (node <- nodes) {
+          val name = nodes(i).asInstanceOf[IdentifierNode].value
+          declarations = declarations.appended(SingleVariableDec(name, valueType, variableType))
+          if (nodes(i + 1) == KeywordNode(";"))
+            break
+          i = i + 2
+        }
+      }
 
       VarDecNode(declarations, nodes).pure[List]
     }
@@ -451,7 +461,8 @@ object LetStatement extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      LetStatementNode(nodes).pure[List]
+      val variableName = nodes(1).asInstanceOf[IdentifierNode]
+      LetStatementNode(variableName.value, nodes.tail.tail).pure[List]
     }
   }
 }
@@ -584,6 +595,7 @@ object Term extends SyntaxRule {
           PriorityTermNode(nodes(1).asInstanceOf[ExpressionNode])
         case n: (IntegerConstantNode | StringConstantNode | KeywordNode) =>
           LiteralTermNode(n)
+        case n: IdentifierNode => IdentifierTermNode(n.value)
         case _ => GenericTermNode(nodes)
       }
 
@@ -625,7 +637,8 @@ object SubroutineCall extends SyntaxRule {
         }
       }
 
-      val parameters = nodes.find(_.isInstanceOf[ExpressionListNode]).get.asInstanceOf[ExpressionListNode]
+      val parameters = nodes.find(_.isInstanceOf[ExpressionListNode])
+        .fold(ExpressionListNode(List()))(_.asInstanceOf[ExpressionListNode])
       SubroutineCallNode(calleeName, parameters, nodes).pure[List]
     }
   }

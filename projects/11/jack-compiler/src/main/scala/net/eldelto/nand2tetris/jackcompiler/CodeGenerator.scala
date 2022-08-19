@@ -39,7 +39,7 @@ class CodeGenerator {
       case ParameterListNode(children)  => generate(children)
       case SubroutineBodyNode(children) => generate(children)
       case StatementsNode(children)     => generate(children)
-      case LetStatementNode(children)   => generate(children)
+      case n: LetStatementNode   => resolveLetStatement(n)
       case IfStatementNode(children)    => generate(children)
       case WhileStatementNode(children) => generate(children)
       case n: SubroutineCallNode => resolveSubroutineCall(n)
@@ -69,6 +69,7 @@ class CodeGenerator {
   private def resolveTerm(term: TermNode): List[String] = term match {
     case LiteralTermNode(literal)     => resolveLiteral(literal)
     case PriorityTermNode(expression) => resolveExpression(expression)
+    case IdentifierTermNode(identifier) => resolveIdentifier(identifier)
     case GenericTermNode(children) => generate(children) // TODO: Figure out what to do here.
   }
 
@@ -78,10 +79,16 @@ class CodeGenerator {
     case KeywordNode(value)         => List(s"tbd 81 '$value'") // TODO: Handle different keywords.
   }
 
+  private def resolveIdentifier(identifier: String): List[String] = {
+    val symbol = symbolTable.getSymbol(identifier)
+    List(s"push local ${symbol.index}")
+  }
+
   private def resolveOps(node: KeywordNode): String = node match {
     case KeywordNode("+") => "add"
     case KeywordNode("*") => "call Math.multiply 2"
-    case KeywordNode(k)                => s"tbd '$k'" // TODO: Handle other operations.
+    case KeywordNode("/") => "call Math.divide 2"
+    case KeywordNode(k)   => s"tbd '$k'" // TODO: Handle other operations.
   }
 
   private def infixToPostfixNotation(nodes: List[ASTNode]): List[ASTNode] = {
@@ -131,5 +138,11 @@ class CodeGenerator {
     val parameterCount = node.parameters.children.size
     generate(node.children) ++ 
     List(s"call ${node.calleeName} ${parameterCount}")
+  }
+
+  private def resolveLetStatement(node: LetStatementNode): List[String] = {
+    val symbol = symbolTable.getSymbol(node.variableName)
+    generate(node.children) ++
+    List(s"pop local ${symbol.index}")
   }
 }

@@ -130,11 +130,7 @@ class ParserSpec
         List(StringIdentifier("a"), Symbol.Plus, StringIdentifier("b")),
         List(
           ExpressionNode(
-            List(
-              GenericTermNode(List(IdentifierNode("a"))),
-              KeywordNode("+"),
-              GenericTermNode(List(IdentifierNode("b")))
-            )
+            List(IdentifierTermNode("a"), KeywordNode("+"), IdentifierTermNode("b"))
           )
         )
       ),
