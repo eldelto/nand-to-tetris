@@ -56,11 +56,8 @@ case class StatementsNode(children: List[ASTNode]) extends ASTNode
 case class LetStatementNode(children: List[ASTNode]) extends ASTNode
 case class IfStatementNode(children: List[ASTNode]) extends ASTNode
 case class WhileStatementNode(children: List[ASTNode]) extends ASTNode
-case class DoStatementNode(
-    calleeName: String,
-    parameters: ExpressionListNode,
-    children: List[ASTNode]
-) extends ASTNode
+case class SubroutineCallNode(calleeName: String, parameters: ExpressionListNode, children: List[ASTNode]) extends ASTNode
+case class DoStatementNode(callee: SubroutineCallNode) extends ASTNode
 case class ReturnStatementNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionListNode(children: List[ASTNode]) extends ASTNode
@@ -512,21 +509,8 @@ object DoStatement extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      var calleeName = ""
-      var i = 0
-      breakable {
-        for (node <- nodes.tail) {
-          i = i + 1
-          node match {
-            case IdentifierNode(value) => calleeName = calleeName + value
-            case KeywordNode(".")      => calleeName = calleeName + "."
-            case _                     => break
-          }
-        }
-      }
-
-      val parameters = nodes(i + 1).asInstanceOf[ExpressionListNode]
-      DoStatementNode(calleeName, parameters, nodes).pure[List]
+      val callee = nodes(1).asInstanceOf[SubroutineCallNode]
+      DoStatementNode(callee).pure[List]
     }
   }
 }
@@ -608,7 +592,8 @@ object Term extends SyntaxRule {
   }
 }
 
-lazy val SubroutineCall = Or(
+object SubroutineCall extends SyntaxRule {
+  private val rule = Or(
   Sequence(
     Identifier,
     ExpectToken(Symbol.LeftParen),
@@ -624,6 +609,27 @@ lazy val SubroutineCall = Or(
     ExpectToken(Symbol.RightParen)
   )
 )
+
+  override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
+    rule.execute(parser).map { nodes =>
+      var calleeName = ""
+      var i = 0
+      breakable {
+        for (node <- nodes) {
+          i = i + 1
+          node match {
+            case IdentifierNode(value) => calleeName = calleeName + value
+            case KeywordNode(".")      => calleeName = calleeName + "."
+            case _                     => break
+          }
+        }
+      }
+
+      val parameters = nodes.find(_.isInstanceOf[ExpressionListNode]).get.asInstanceOf[ExpressionListNode]
+      SubroutineCallNode(calleeName, parameters, nodes).pure[List]
+    }
+  }
+}
 
 object ExpressionList extends SyntaxRule {
   private val rule = Repeat( // TODO: Optional
