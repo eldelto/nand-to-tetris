@@ -126,12 +126,13 @@ class ParserSpec
         List(LiteralTermNode(KeywordNode("true")))
       ),
       (
-        Expression,
-        List(StringIdentifier("a"), Symbol.Plus, StringIdentifier("b")),
+        Sequence(Expression, ExpectToken(Symbol.SemiColon)),
+        List(StringIdentifier("a"), Symbol.Plus, StringIdentifier("b"), Symbol.SemiColon),
         List(
           ExpressionNode(
             List(IdentifierTermNode("a"), KeywordNode("+"), IdentifierTermNode("b"))
-          )
+          ),
+          KeywordNode(";")
         )
       ),
       (
@@ -166,18 +167,29 @@ class ParserSpec
           Symbol.RightParen
         ),
         List(
-          IdentifierNode("Object"),
-          KeywordNode("."),
-          IdentifierNode("function"),
-          KeywordNode("("),
-          ExpressionListNode(
-            List(
-              ExpressionNode(
-                List(LiteralTermNode(StringConstantNode("value ")))
+          SubroutineCallNode("Object.function",
+            ExpressionListNode(
+              List(
+                ExpressionNode(
+                  List(LiteralTermNode(StringConstantNode("value ")))
+                )
               )
+            ), 
+            List(
+              IdentifierNode("Object"),
+              KeywordNode("."),
+              IdentifierNode("function"),
+              KeywordNode("("),
+              ExpressionListNode(
+                List(
+                  ExpressionNode(
+                    List(LiteralTermNode(StringConstantNode("value ")))
+                  )
+                )
+              ),
+              KeywordNode(")")
             )
-          ),
-          KeywordNode(")")
+          )
         )
       ),
       (
