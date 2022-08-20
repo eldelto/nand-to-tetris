@@ -6,6 +6,7 @@ import scala.collection.mutable.ListBuffer
 
 class CodeGenerator {
   private val symbolTable = SymbolTable()
+  private var whileIndex = 0
 
   def generate(nodes: List[ASTNode]): List[String] = nodes.flatMap(generate)
 
@@ -39,11 +40,11 @@ class CodeGenerator {
       case ParameterListNode(children)  => generate(children)
       case SubroutineBodyNode(children) => generate(children)
       case StatementsNode(children)     => generate(children)
-      case n: LetStatementNode   => resolveLetStatement(n)
+      case n: LetStatementNode          => resolveLetStatement(n)
       case IfStatementNode(children)    => generate(children)
-      case WhileStatementNode(children) => generate(children)
-      case n: SubroutineCallNode => resolveSubroutineCall(n)
-      case n: DoStatementNode => resolveDoStatement(n)
+      case n: WhileStatementNode        => resolveWhileStatement(n)
+      case n: SubroutineCallNode        => resolveSubroutineCall(n)
+      case n: DoStatementNode           => resolveDoStatement(n)
       case ReturnStatementNode(children) =>
         generate(children) ++ resolveReturnStatement(children)
       case n: ExpressionNode => resolveExpression(n)
@@ -67,17 +68,20 @@ class CodeGenerator {
     }
 
   private def resolveTerm(term: TermNode): List[String] = term match {
-    case LiteralTermNode(literal)     => resolveLiteral(literal)
-    case PriorityTermNode(expression) => resolveExpression(expression)
+    case LiteralTermNode(literal)       => resolveLiteral(literal)
+    case PriorityTermNode(expression)   => resolveExpression(expression)
     case IdentifierTermNode(identifier) => resolveIdentifier(identifier)
-    case GenericTermNode(children) => generate(children) // TODO: Figure out what to do here.
+    case GenericTermNode(children) =>
+      generate(children) // TODO: Figure out what to do here.
   }
 
-  private def resolveLiteral(literal: LiteralNode): List[String] = literal match {
-    case IntegerConstantNode(value) => List(s"push constant $value")
-    case StringConstantNode(value)  => resolveStringConstant(value)
-    case KeywordNode(value)         => List(s"tbd '$value'") // TODO: Handle different keywords.
-  }
+  private def resolveLiteral(literal: LiteralNode): List[String] =
+    literal match {
+      case IntegerConstantNode(value) => List(s"push constant $value")
+      case StringConstantNode(value)  => resolveStringConstant(value)
+      case KeywordNode(value) =>
+        List(s"tbd '$value'") // TODO: Handle different keywords.
+    }
 
   private def resolveIdentifier(identifier: String): List[String] = {
     val symbol = symbolTable.getSymbol(identifier)
@@ -107,7 +111,7 @@ class CodeGenerator {
 
   private def resolveDoStatement(node: DoStatementNode): List[String] = {
     resolveSubroutineCall(node.callee) ++
-    List("pop temp 0")
+      List("pop temp 0")
   }
 
   private def resolveReturnStatement(children: List[ASTNode]): List[String] = {
@@ -134,18 +138,32 @@ class CodeGenerator {
   private def resolveStringConstant(value: String): List[String] = {
     val charValues = value.map(_.intValue)
     List(s"push constant ${value.length}", "call String.new 1") ++
-    charValues.toList.flatMap(v => List(s"push constant $v", "call String.appendChar 2"))
+      charValues.toList.flatMap(v =>
+        List(s"push constant $v", "call String.appendChar 2")
+      )
   }
 
   private def resolveSubroutineCall(node: SubroutineCallNode): List[String] = {
     val parameterCount = node.parameters.children.size
-    generate(node.children) ++ 
-    List(s"call ${node.calleeName} ${parameterCount}")
+    generate(node.children) ++
+      List(s"call ${node.calleeName} ${parameterCount}")
   }
 
   private def resolveLetStatement(node: LetStatementNode): List[String] = {
     val symbol = symbolTable.getSymbol(node.variableName)
     generate(node.children) ++
-    List(s"pop local ${symbol.index}")
+      List(s"pop local ${symbol.index}")
+  }
+
+  private def resolveWhileStatement(node: WhileStatementNode): List[String] = {
+    val startLabel = s"WHILE_EXP$whileIndex"
+    val endLabel = s"WHILE_END$whileIndex"
+    whileIndex += 1
+
+    List(s"label $startLabel") ++
+      resolveExpression(node.condition) ++
+      List("not", s"if-goto $endLabel") ++
+      generate(node.body) ++
+      List(s"goto $startLabel", s"label $endLabel")
   }
 }

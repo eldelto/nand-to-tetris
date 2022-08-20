@@ -53,10 +53,16 @@ case class SubroutineDecNode(
 case class ParameterListNode(children: List[ASTNode]) extends ASTNode
 case class SubroutineBodyNode(children: List[ASTNode]) extends ASTNode
 case class StatementsNode(children: List[ASTNode]) extends ASTNode
-case class LetStatementNode(variableName: String, children: List[ASTNode]) extends ASTNode
+case class LetStatementNode(variableName: String, children: List[ASTNode])
+    extends ASTNode
 case class IfStatementNode(children: List[ASTNode]) extends ASTNode
-case class WhileStatementNode(children: List[ASTNode]) extends ASTNode
-case class SubroutineCallNode(calleeName: String, parameters: ExpressionListNode, children: List[ASTNode]) extends ASTNode
+case class WhileStatementNode(condition: ExpressionNode, body: StatementsNode)
+    extends ASTNode
+case class SubroutineCallNode(
+    calleeName: String,
+    parameters: ExpressionListNode,
+    children: List[ASTNode]
+) extends ASTNode
 case class DoStatementNode(callee: SubroutineCallNode) extends ASTNode
 case class ReturnStatementNode(children: List[ASTNode]) extends ASTNode
 case class ExpressionNode(children: List[ASTNode]) extends ASTNode
@@ -413,7 +419,8 @@ object VarDec extends SyntaxRule {
       breakable {
         for (node <- nodes) {
           val name = nodes(i).asInstanceOf[IdentifierNode].value
-          declarations = declarations.appended(SingleVariableDec(name, valueType, variableType))
+          declarations = declarations
+            .appended(SingleVariableDec(name, valueType, variableType))
           if (nodes(i + 1) == KeywordNode(";"))
             break
           i = i + 2
@@ -506,7 +513,9 @@ object WhileStatement extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      WhileStatementNode(nodes).pure[List]
+      val condition = nodes(2).asInstanceOf[ExpressionNode]
+      val body = nodes(5).asInstanceOf[StatementsNode]
+      WhileStatementNode(condition, body).pure[List]
     }
   }
 }
@@ -596,7 +605,7 @@ object Term extends SyntaxRule {
         case n: (IntegerConstantNode | StringConstantNode | KeywordNode) =>
           LiteralTermNode(n)
         case n: IdentifierNode => IdentifierTermNode(n.value)
-        case _ => GenericTermNode(nodes)
+        case _                 => GenericTermNode(nodes)
       }
 
       result.pure[List]
@@ -606,21 +615,21 @@ object Term extends SyntaxRule {
 
 object SubroutineCall extends SyntaxRule {
   private val rule = Or(
-  Sequence(
-    Identifier,
-    ExpectToken(Symbol.LeftParen),
-    ExpressionList,
-    ExpectToken(Symbol.RightParen)
-  ),
-  Sequence(
-    Identifier,
-    ExpectToken(Symbol.Period),
-    Identifier,
-    ExpectToken(Symbol.LeftParen),
-    ExpressionList,
-    ExpectToken(Symbol.RightParen)
+    Sequence(
+      Identifier,
+      ExpectToken(Symbol.LeftParen),
+      ExpressionList,
+      ExpectToken(Symbol.RightParen)
+    ),
+    Sequence(
+      Identifier,
+      ExpectToken(Symbol.Period),
+      Identifier,
+      ExpectToken(Symbol.LeftParen),
+      ExpressionList,
+      ExpectToken(Symbol.RightParen)
+    )
   )
-)
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
@@ -637,7 +646,8 @@ object SubroutineCall extends SyntaxRule {
         }
       }
 
-      val parameters = nodes.find(_.isInstanceOf[ExpressionListNode])
+      val parameters = nodes
+        .find(_.isInstanceOf[ExpressionListNode])
         .fold(ExpressionListNode(List()))(_.asInstanceOf[ExpressionListNode])
       SubroutineCallNode(calleeName, parameters, nodes).pure[List]
     }
