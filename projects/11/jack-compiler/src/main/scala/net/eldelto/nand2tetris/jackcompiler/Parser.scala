@@ -55,6 +55,11 @@ case class SubroutineBodyNode(children: List[ASTNode]) extends ASTNode
 case class StatementsNode(children: List[ASTNode]) extends ASTNode
 case class LetStatementNode(variableName: String, children: List[ASTNode])
     extends ASTNode
+case class ArrayLetStatementNode(
+    variableName: String,
+    indexExpression: ExpressionNode,
+    expression: ExpressionNode
+) extends ASTNode
 case class IfStatementNode(children: List[ASTNode]) extends ASTNode
 case class WhileStatementNode(condition: ExpressionNode, body: StatementsNode)
     extends ASTNode
@@ -469,7 +474,18 @@ object LetStatement extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
       val variableName = nodes(1).asInstanceOf[IdentifierNode]
-      LetStatementNode(variableName.value, nodes.tail.tail).pure[List]
+
+      nodes(2) match {
+        case KeywordNode("=") =>
+          LetStatementNode(variableName.value, nodes.tail.tail).pure[List]
+        case KeywordNode("[") =>
+          val indexExpression = nodes(3).asInstanceOf[ExpressionNode]
+          val expression = nodes(6).asInstanceOf[ExpressionNode]
+          ArrayLetStatementNode(variableName.value, indexExpression, expression)
+            .pure[List]
+        case n =>
+          throw IllegalStateException(s"Unexpected node type: ${n.getClass}")
+      }
     }
   }
 }

@@ -20,6 +20,7 @@ class CodeGenerator {
           List()
         else
           List()
+      case n: LiteralNode => resolveLiteral(n)
       case ClassNode(name, children) =>
         symbolTable.className = name
         generate(children)
@@ -41,6 +42,7 @@ class CodeGenerator {
       case SubroutineBodyNode(children) => generate(children)
       case StatementsNode(children)     => generate(children)
       case n: LetStatementNode          => resolveLetStatement(n)
+      case n: ArrayLetStatementNode     => resolveArrayLetStatement(n)
       case IfStatementNode(children)    => generate(children)
       case n: WhileStatementNode        => resolveWhileStatement(n)
       case n: SubroutineCallNode        => resolveSubroutineCall(n)
@@ -51,7 +53,6 @@ class CodeGenerator {
       case n: TermNode       => resolveTerm(n)
       case ExpressionListNode(children) =>
         generate(children)
-      case _ => List()
     }
   }
 
@@ -153,6 +154,17 @@ class CodeGenerator {
     val symbol = symbolTable.getSymbol(node.variableName)
     generate(node.children) ++
       List(s"pop local ${symbol.index}")
+  }
+
+  private def resolveArrayLetStatement(
+      node: ArrayLetStatementNode
+  ): List[String] = {
+    val symbol = symbolTable.getSymbol(node.variableName)
+    resolveExpression(node.indexExpression) ++
+      List(s"push local ${symbol.index}") ++
+      List("add") ++
+      resolveExpression(node.expression) ++
+      List("pop temp 0", "pop pointer 1", "push temp 0", "pop that 0")
   }
 
   private def resolveWhileStatement(node: WhileStatementNode): List[String] = {
