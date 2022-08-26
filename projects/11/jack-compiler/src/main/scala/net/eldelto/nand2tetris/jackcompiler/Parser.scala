@@ -77,6 +77,7 @@ trait TermNode extends ASTNode
 case class PriorityTermNode(expression: ExpressionNode) extends TermNode
 case class LiteralTermNode(literal: LiteralNode) extends TermNode
 case class IdentifierTermNode(identifier: String) extends TermNode
+case class ArrayIdentifierTermNode(identifier: String, index: ExpressionNode) extends TermNode
 case class GenericTermNode(children: List[ASTNode]) extends TermNode
 
 trait Parser {
@@ -620,6 +621,9 @@ object Term extends SyntaxRule {
           PriorityTermNode(nodes(1).asInstanceOf[ExpressionNode])
         case n: (IntegerConstantNode | StringConstantNode | KeywordNode) =>
           LiteralTermNode(n)
+        case n: IdentifierNode if (nodes.length > 1 && nodes(1) == KeywordNode("[")) =>
+          val indexExpression = nodes(2).asInstanceOf[ExpressionNode]
+          ArrayIdentifierTermNode(n.value, indexExpression)
         case n: IdentifierNode => IdentifierTermNode(n.value)
         case _                 => GenericTermNode(nodes)
       }

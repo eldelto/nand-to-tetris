@@ -72,6 +72,7 @@ class CodeGenerator {
     case LiteralTermNode(literal)       => resolveLiteral(literal)
     case PriorityTermNode(expression)   => resolveExpression(expression)
     case IdentifierTermNode(identifier) => resolveIdentifier(identifier)
+    case n: ArrayIdentifierTermNode => resolveArrayIdentifier(n)
     case GenericTermNode(children) =>
       generate(children) // TODO: Figure out what to do here.
   }
@@ -87,6 +88,12 @@ class CodeGenerator {
   private def resolveIdentifier(identifier: String): List[String] = {
     val symbol = symbolTable.getSymbol(identifier)
     List(s"push local ${symbol.index}")
+  }
+
+  private def resolveArrayIdentifier(node: ArrayIdentifierTermNode): List[String] = {
+    val symbol = symbolTable.getSymbol(node.identifier)
+    resolveExpression(node.index) ++
+    List(s"push local ${symbol.index}", "add", "pop pointer 1", "push that 0")
   }
 
   private def resolveOps(node: KeywordNode): String = node match {
