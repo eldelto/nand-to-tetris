@@ -30,14 +30,9 @@ class CodeGenerator {
       case VarDecNode(declarations, children) =>
         declarations.foreach(symbolTable.addSubroutineDeclaration(_))
         List()
-      case SubroutineDecNode(routineType, name, _, parameters, children) =>
+      case n: SubroutineDecNode =>
         symbolTable.clearSubroutineTable()
-        resolveSubroutineDecNode(
-          symbolTable,
-          routineType,
-          name,
-          parameters
-        ) ++ generate(children)
+        resolveSubroutineDecNode(n)
       case ParameterListNode(children)  => generate(children)
       case SubroutineBodyNode(children) => generate(children)
       case StatementsNode(children)     => generate(children)
@@ -127,18 +122,20 @@ class CodeGenerator {
     result ++ List("return")
   }
 
-  private def resolveSubroutineDecNode(
-      symbolTable: SymbolTable,
-      routineType: SubroutineType,
-      name: String,
-      parameters: ParameterListNode
-  ): List[String] = {
+  private def resolveSubroutineDecNode(node: SubroutineDecNode): List[String] = {
     // TODO: Fix parameter count.
-    val parametercount = parameters.children.length
+    val parameterCount = node.parameters.children.length
+    val localVariableCount = node.body.children
+      .filter(_.isInstanceOf[VarDecNode])
+      .map(_.asInstanceOf[VarDecNode].declarations.length)
+      .sum
 
-    routineType match {
+    val totalCount = parameterCount + localVariableCount
+
+    node.routineType match {
       case SubroutineType.Function =>
-        List(s"function ${symbolTable.className}.$name $parametercount")
+        List(s"function ${symbolTable.className}.${node.name} $totalCount") ++
+        generate(node.body.children)
       case value => List(s"$value TBD")
     }
   }

@@ -48,7 +48,7 @@ case class SubroutineDecNode(
     name: String,
     returnType: String,
     parameters: ParameterListNode,
-    children: List[ASTNode]
+    body: SubroutineBodyNode
 ) extends ASTNode
 case class ParameterListNode(children: List[ASTNode]) extends ASTNode
 case class SubroutineBodyNode(children: List[ASTNode]) extends ASTNode
@@ -348,8 +348,9 @@ object SubroutineDec extends SyntaxRule {
 
       val name = nodes(2).asInstanceOf[IdentifierNode].value
       val parameterList = nodes(4).asInstanceOf[ParameterListNode]
+      val body = nodes(6).asInstanceOf[SubroutineBodyNode]
 
-      SubroutineDecNode(routineType, name, returnType, parameterList, nodes)
+      SubroutineDecNode(routineType, name, returnType, parameterList, body)
         .pure[List]
     }
   }
