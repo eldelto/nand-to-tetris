@@ -16,7 +16,8 @@ class CompilerSpec
     val testData = Table(
       ("Jack file", "Expected VM code"),
       ("Seven/Main.jack", "Seven/Main.vm"),
-      ("Average/Main.jack", "Average/Main.vm")
+      ("Average/Main.jack", "Average/Main.vm"),
+      ("ComplexArrays/Main.jack", "ComplexArrays/Main.vm"),
     )
 
     forAll(testData) { (jackFile, expectedVmCode) =>
