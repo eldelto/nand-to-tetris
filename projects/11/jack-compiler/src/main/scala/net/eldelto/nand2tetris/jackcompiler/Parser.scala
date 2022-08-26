@@ -58,7 +58,7 @@ case class ArrayLetStatementNode(
     indexExpression: ExpressionNode,
     expression: ExpressionNode
 ) extends ASTNode
-case class IfStatementNode(children: List[ASTNode]) extends ASTNode
+case class IfStatementNode(condition: ExpressionNode, body: StatementsNode, elseBody: Option[StatementsNode]) extends ASTNode
 case class WhileStatementNode(condition: ExpressionNode, body: StatementsNode)
     extends ASTNode
 case class SubroutineCallNode(
@@ -532,7 +532,11 @@ object IfStatement extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      IfStatementNode(nodes).pure[List]
+      val condition = nodes(2).asInstanceOf[ExpressionNode]
+      val body = nodes(5).asInstanceOf[StatementsNode]
+      val elseBody = if (nodes.length > 9) Some(nodes(9).asInstanceOf[StatementsNode]) else None
+
+      IfStatementNode(condition, body, elseBody).pure[List]
     }
   }
 }

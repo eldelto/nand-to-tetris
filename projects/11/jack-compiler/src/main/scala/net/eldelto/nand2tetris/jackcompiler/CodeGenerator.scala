@@ -7,6 +7,7 @@ import scala.collection.mutable.ListBuffer
 class CodeGenerator {
   private val symbolTable = SymbolTable()
   private var whileIndex = 0
+  private var ifIndex = 0
 
   def generate(nodes: List[ASTNode]): List[String] = nodes.flatMap(generate)
 
@@ -36,7 +37,7 @@ class CodeGenerator {
       case StatementsNode(children)     => generate(children)
       case n: LetStatementNode          => resolveLetStatement(n)
       case n: ArrayLetStatementNode     => resolveArrayLetStatement(n)
-      case IfStatementNode(children)    => generate(children)
+      case n: IfStatementNode           => resolveIfStatement(n)
       case n: WhileStatementNode        => resolveWhileStatement(n)
       case n: SubroutineCallNode        => resolveSubroutineCall(n)
       case n: DoStatementNode           => resolveDoStatement(n)
@@ -205,6 +206,18 @@ class CodeGenerator {
       List("not", s"if-goto $endLabel") ++
       generate(node.body) ++
       List(s"goto $startLabel", s"label $endLabel")
+  }
+
+  private def resolveIfStatement(node: IfStatementNode): List[String] = {
+    val startLabel = s"IF_TRUE$ifIndex"
+    val endLabel = s"IF_FALSE$ifIndex"
+    ifIndex += 1
+ 
+    // TODO: Handle else branch.
+    resolveExpression(node.condition) ++
+    List(s"if-goto $startLabel", s"goto $endLabel", s"label $startLabel") ++
+    generate(node.body) ++
+    List(s"label $endLabel")
   }
 
   private def resolveParameterList(node: ParameterListNode): List[String] = {

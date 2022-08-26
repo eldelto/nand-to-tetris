@@ -108,17 +108,11 @@ class ParserSpec
         ),
         List(
           IfStatementNode(
-            List(
-              KeywordNode("if"),
-              KeywordNode("("),
               ExpressionNode(List(LiteralTermNode(KeywordNode("false")))),
-              KeywordNode(")"),
-              KeywordNode("{"),
               StatementsNode(List()),
-              KeywordNode("}")
+              None
             )
           )
-        )
       ),
       (
         Term,
