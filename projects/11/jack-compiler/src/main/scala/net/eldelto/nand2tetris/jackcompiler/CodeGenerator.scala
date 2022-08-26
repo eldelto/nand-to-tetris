@@ -27,13 +27,11 @@ class CodeGenerator {
       case ClassVarDecNode(declarations, children) =>
         declarations.foreach(symbolTable.addClassDeclaration(_))
         List()
-      case VarDecNode(declarations, children) =>
+      case VarDecNode(declarations) =>
         declarations.foreach(symbolTable.addSubroutineDeclaration(_))
         List()
-      case n: SubroutineDecNode =>
-        symbolTable.clearSubroutineTable()
-        resolveSubroutineDecNode(n)
-      case ParameterListNode(children)  => generate(children)
+      case n: SubroutineDecNode => resolveSubroutineDecNode(n)
+      case n: ParameterListNode  => resolveParameterList(n)
       case SubroutineBodyNode(children) => generate(children)
       case StatementsNode(children)     => generate(children)
       case n: LetStatementNode          => resolveLetStatement(n)
@@ -76,27 +74,39 @@ class CodeGenerator {
     literal match {
       case IntegerConstantNode(value) => List(s"push constant $value")
       case StringConstantNode(value)  => resolveStringConstant(value)
+      case KeywordNode("null") => List("push constant 0")
       case KeywordNode(value) =>
         List(s"tbd '$value'") // TODO: Handle different keywords.
     }
 
   private def resolveIdentifier(identifier: String): List[String] = {
     val symbol = symbolTable.getSymbol(identifier)
-    List(s"push local ${symbol.index}")
+    symbol.declaration.variableType match {
+      case VariableType.Local => List(s"push local ${symbol.index}")
+      case VariableType.Argument => List(s"push argument ${symbol.index}")
+      case t => List(s"TBD: $t")
+    }
   }
 
   private def resolveArrayIdentifier(node: ArrayIdentifierTermNode): List[String] = {
     val symbol = symbolTable.getSymbol(node.identifier)
-    resolveExpression(node.index) ++
-    List(s"push local ${symbol.index}", "add", "pop pointer 1", "push that 0")
+    val memorySegment = symbol.declaration.variableType match {
+      case VariableType.Local => List(s"push local ${symbol.index}", "add", "pop pointer 1", "push that 0")
+      case VariableType.Argument => List(s"push argumetn ${symbol.index}", "add", "pop pointer 1", "push that 0")
+      case t => List(s"TBD: $t")
+    }
+
+    resolveExpression(node.index) ++ memorySegment
   }
 
   private def resolveOps(node: KeywordNode): String = node match {
     case KeywordNode("+") => "add"
+    case KeywordNode("-") => "sub"
     case KeywordNode("*") => "call Math.multiply 2"
     case KeywordNode("/") => "call Math.divide 2"
     case KeywordNode("<") => "lt"
     case KeywordNode(">") => "gt"
+    case KeywordNode("=") => "eq"
     case KeywordNode(k)   => s"tbd '$k'" // TODO: Handle other operations.
   }
 
@@ -123,18 +133,18 @@ class CodeGenerator {
   }
 
   private def resolveSubroutineDecNode(node: SubroutineDecNode): List[String] = {
-    // TODO: Fix parameter count.
-    val parameterCount = node.parameters.children.length
+    symbolTable.clearSubroutineTable()
+
     val localVariableCount = node.body.children
       .filter(_.isInstanceOf[VarDecNode])
       .map(_.asInstanceOf[VarDecNode].declarations.length)
       .sum
 
-    val totalCount = parameterCount + localVariableCount
+    resolveParameterList(node.parameters)
 
     node.routineType match {
       case SubroutineType.Function =>
-        List(s"function ${symbolTable.className}.${node.name} $totalCount") ++
+        List(s"function ${symbolTable.className}.${node.name} $localVariableCount") ++
         generate(node.body.children)
       case value => List(s"$value TBD")
     }
@@ -149,23 +159,37 @@ class CodeGenerator {
   }
 
   private def resolveSubroutineCall(node: SubroutineCallNode): List[String] = {
-    val parameterCount = node.parameters.children.size
+    val parameterCount = if (node.parameters.children.length > 0 )
+      node.parameters.children.count(_ == KeywordNode(",")) + 1
+    else 0
+
     generate(node.children) ++
       List(s"call ${node.calleeName} ${parameterCount}")
   }
 
   private def resolveLetStatement(node: LetStatementNode): List[String] = {
     val symbol = symbolTable.getSymbol(node.variableName)
-    generate(node.children) ++
-      List(s"pop local ${symbol.index}")
+    val memorySegment = symbol.declaration.variableType match {
+      case VariableType.Local => List(s"pop local ${symbol.index}")
+      case VariableType.Argument => List(s"pop argument ${symbol.index}")
+      case t => List(s"TBD: $t")
+    }
+
+    generate(node.children) ++ memorySegment
   }
 
   private def resolveArrayLetStatement(
       node: ArrayLetStatementNode
   ): List[String] = {
     val symbol = symbolTable.getSymbol(node.variableName)
+    val memorySegment = symbol.declaration.variableType match {
+      case VariableType.Local => List(s"push local ${symbol.index}")
+      case VariableType.Argument => List(s"push argument ${symbol.index}")
+      case t => List(s"TBD: $t")
+    }
+
     resolveExpression(node.indexExpression) ++
-      List(s"push local ${symbol.index}") ++
+      memorySegment ++
       List("add") ++
       resolveExpression(node.expression) ++
       List("pop temp 0", "pop pointer 1", "push temp 0", "pop that 0")
@@ -181,5 +205,10 @@ class CodeGenerator {
       List("not", s"if-goto $endLabel") ++
       generate(node.body) ++
       List(s"goto $startLabel", s"label $endLabel")
+  }
+
+  private def resolveParameterList(node: ParameterListNode): List[String] = {
+    node.variables.foreach(symbolTable.addSubroutineDeclaration(_))
+    List()
   }
 }

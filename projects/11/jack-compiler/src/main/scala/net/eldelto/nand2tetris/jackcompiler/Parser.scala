@@ -12,6 +12,7 @@ enum VariableType {
   case Local
   case Field
   case Static
+  case Argument
 }
 
 enum SubroutineType {
@@ -39,10 +40,7 @@ case class ClassVarDecNode(
     declarations: List[SingleVariableDec],
     children: List[ASTNode]
 ) extends ASTNode
-case class VarDecNode(
-    declarations: List[SingleVariableDec],
-    children: List[ASTNode]
-) extends ASTNode
+case class VarDecNode(declarations: List[SingleVariableDec]) extends ASTNode
 case class SubroutineDecNode(
     routineType: SubroutineType,
     name: String,
@@ -50,7 +48,7 @@ case class SubroutineDecNode(
     parameters: ParameterListNode,
     body: SubroutineBodyNode
 ) extends ASTNode
-case class ParameterListNode(children: List[ASTNode]) extends ASTNode
+case class ParameterListNode(variables: List[SingleVariableDec]) extends ASTNode
 case class SubroutineBodyNode(children: List[ASTNode]) extends ASTNode
 case class StatementsNode(children: List[ASTNode]) extends ASTNode
 case class LetStatementNode(variableName: String, children: List[ASTNode])
@@ -373,7 +371,29 @@ object ParameterList extends SyntaxRule {
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
-      ParameterListNode(nodes).pure[List]
+      var declarations: List[SingleVariableDec] = List()
+      if (nodes.length >= 2) {
+        var i = 0
+        breakable {
+          for (node <- nodes) {
+            val valueType = nodes(i) match {
+              case n: IdentifierNode => n.value
+              case n: KeywordNode    => n.value
+              case n => throw new IllegalStateException(s"Expected variable type but got: $n")
+            }         
+
+            val name = nodes(i + 1).asInstanceOf[IdentifierNode].value
+            declarations = declarations
+              .appended(SingleVariableDec(name, valueType, VariableType.Argument))
+
+            i = i + 3
+            if (nodes.length <= i)
+              break
+          }
+        }
+      }
+
+      ParameterListNode(declarations).pure[List]
     }
   }
 }
@@ -420,7 +440,6 @@ object VarDec extends SyntaxRule {
         case _ => throw new IllegalStateException("Unexpected node")
       }
 
-      // TODO: Handle multiple variable declarations in one statement.
       var declarations: List[SingleVariableDec] = List()
       var i = 2
       breakable {
@@ -434,7 +453,7 @@ object VarDec extends SyntaxRule {
         }
       }
 
-      VarDecNode(declarations, nodes).pure[List]
+      VarDecNode(declarations).pure[List]
     }
   }
 }

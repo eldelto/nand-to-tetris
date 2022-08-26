@@ -16,7 +16,7 @@ class SymbolTable {
     .put(declaration.name, SymbolEntry(declaration, subroutineTable.size))
 
   def getSymbol(name: String): SymbolEntry =
-    subroutineTable.get(name).orElse(classTable.get(name)).get
+    subroutineTable.get(name).orElse(classTable.get(name)).getOrElse(throw IllegalStateException(s"Symbol '$name' doesn't exist."))
 
   def clearSubroutineTable(): Unit = subroutineTable.clear()
 }

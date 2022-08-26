@@ -124,6 +124,7 @@ private def parseTokens(input: List[Char]): List[Token] = {
         tokenBuffer = ""
         tokens
       } else {
+        // TODO: This will cause extra whitespaces before Symbols in string literals.
         Symbol.parse(char.toString) match {
           case Some(symbolToken) =>
             val tokens = LazyList(parseNonSymbol(tokenBuffer), symbolToken)
