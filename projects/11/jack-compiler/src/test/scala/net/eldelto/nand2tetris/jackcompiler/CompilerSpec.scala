@@ -17,7 +17,8 @@ class CompilerSpec
       ("Jack file", "Expected VM code"),
       ("Seven/Main.jack", "Seven/Main.vm"),
       ("Average/Main.jack", "Average/Main.vm"),
-      ("ComplexArrays/Main.jack", "ComplexArrays/Main.vm"),
+      // ("ComplexArrays/Main.jack", "ComplexArrays/Main.vm"),
+      ("ConvertToBin/Main.jack", "ConvertToBin/Main.vm")
     )
 
     forAll(testData) { (jackFile, expectedVmCode) =>

@@ -7,15 +7,14 @@ ThisBuild / organizationName := "jack-compiler"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "vm-translator",
+    name := "jack-compiler",
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.7.0",
     libraryDependencies += "org.apache.commons" % "commons-text" % "1.9",
-
     libraryDependencies += scalaTest % Test,
 
     // Build
     assembly / mainClass := Some("net.eldelto.nand2tetris.jackcompiler.Main"),
-    assembly / assemblyJarName := "vm-translator.jar",
+    assembly / assemblyJarName := "jack-compiler.jar",
 
     // Test
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oF")
