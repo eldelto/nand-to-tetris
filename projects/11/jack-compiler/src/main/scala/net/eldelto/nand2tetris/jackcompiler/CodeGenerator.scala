@@ -31,8 +31,8 @@ class CodeGenerator {
       case VarDecNode(declarations) =>
         declarations.foreach(symbolTable.addSubroutineDeclaration(_))
         List()
-      case n: SubroutineDecNode => resolveSubroutineDecNode(n)
-      case n: ParameterListNode  => resolveParameterList(n)
+      case n: SubroutineDecNode         => resolveSubroutineDecNode(n)
+      case n: ParameterListNode         => resolveParameterList(n)
       case SubroutineBodyNode(children) => generate(children)
       case StatementsNode(children)     => generate(children)
       case n: LetStatementNode          => resolveLetStatement(n)
@@ -66,7 +66,7 @@ class CodeGenerator {
     case LiteralTermNode(literal)       => resolveLiteral(literal)
     case PriorityTermNode(expression)   => resolveExpression(expression)
     case IdentifierTermNode(identifier) => resolveIdentifier(identifier)
-    case n: ArrayIdentifierTermNode => resolveArrayIdentifier(n)
+    case n: ArrayIdentifierTermNode     => resolveArrayIdentifier(n)
     case GenericTermNode(children) =>
       generate(children) // TODO: Figure out what to do here.
   }
@@ -75,7 +75,7 @@ class CodeGenerator {
     literal match {
       case IntegerConstantNode(value) => List(s"push constant $value")
       case StringConstantNode(value)  => resolveStringConstant(value)
-      case KeywordNode("null") => List("push constant 0")
+      case KeywordNode("null")        => List("push constant 0")
       case KeywordNode(value) =>
         List(s"tbd '$value'") // TODO: Handle different keywords.
     }
@@ -83,17 +83,31 @@ class CodeGenerator {
   private def resolveIdentifier(identifier: String): List[String] = {
     val symbol = symbolTable.getSymbol(identifier)
     symbol.declaration.variableType match {
-      case VariableType.Local => List(s"push local ${symbol.index}")
+      case VariableType.Local    => List(s"push local ${symbol.index}")
       case VariableType.Argument => List(s"push argument ${symbol.index}")
-      case t => List(s"TBD: $t")
+      case t                     => List(s"TBD: $t")
     }
   }
 
-  private def resolveArrayIdentifier(node: ArrayIdentifierTermNode): List[String] = {
+  private def resolveArrayIdentifier(
+      node: ArrayIdentifierTermNode
+  ): List[String] = {
     val symbol = symbolTable.getSymbol(node.identifier)
     val memorySegment = symbol.declaration.variableType match {
-      case VariableType.Local => List(s"push local ${symbol.index}", "add", "pop pointer 1", "push that 0")
-      case VariableType.Argument => List(s"push argumetn ${symbol.index}", "add", "pop pointer 1", "push that 0")
+      case VariableType.Local =>
+        List(
+          s"push local ${symbol.index}",
+          "add",
+          "pop pointer 1",
+          "push that 0"
+        )
+      case VariableType.Argument =>
+        List(
+          s"push argumetn ${symbol.index}",
+          "add",
+          "pop pointer 1",
+          "push that 0"
+        )
       case t => List(s"TBD: $t")
     }
 
@@ -133,7 +147,9 @@ class CodeGenerator {
     result ++ List("return")
   }
 
-  private def resolveSubroutineDecNode(node: SubroutineDecNode): List[String] = {
+  private def resolveSubroutineDecNode(
+      node: SubroutineDecNode
+  ): List[String] = {
     symbolTable.clearSubroutineTable()
 
     val localVariableCount = node.body.children
@@ -145,8 +161,10 @@ class CodeGenerator {
 
     node.routineType match {
       case SubroutineType.Function =>
-        List(s"function ${symbolTable.className}.${node.name} $localVariableCount") ++
-        generate(node.body.children)
+        List(
+          s"function ${symbolTable.className}.${node.name} $localVariableCount"
+        ) ++
+          generate(node.body.children)
       case value => List(s"$value TBD")
     }
   }
@@ -160,9 +178,10 @@ class CodeGenerator {
   }
 
   private def resolveSubroutineCall(node: SubroutineCallNode): List[String] = {
-    val parameterCount = if (node.parameters.children.length > 0 )
-      node.parameters.children.count(_ == KeywordNode(",")) + 1
-    else 0
+    val parameterCount =
+      if (node.parameters.children.length > 0)
+        node.parameters.children.count(_ == KeywordNode(",")) + 1
+      else 0
 
     generate(node.children) ++
       List(s"call ${node.calleeName} ${parameterCount}")
@@ -171,9 +190,9 @@ class CodeGenerator {
   private def resolveLetStatement(node: LetStatementNode): List[String] = {
     val symbol = symbolTable.getSymbol(node.variableName)
     val memorySegment = symbol.declaration.variableType match {
-      case VariableType.Local => List(s"pop local ${symbol.index}")
+      case VariableType.Local    => List(s"pop local ${symbol.index}")
       case VariableType.Argument => List(s"pop argument ${symbol.index}")
-      case t => List(s"TBD: $t")
+      case t                     => List(s"TBD: $t")
     }
 
     generate(node.children) ++ memorySegment
@@ -184,9 +203,9 @@ class CodeGenerator {
   ): List[String] = {
     val symbol = symbolTable.getSymbol(node.variableName)
     val memorySegment = symbol.declaration.variableType match {
-      case VariableType.Local => List(s"push local ${symbol.index}")
+      case VariableType.Local    => List(s"push local ${symbol.index}")
       case VariableType.Argument => List(s"push argument ${symbol.index}")
-      case t => List(s"TBD: $t")
+      case t                     => List(s"TBD: $t")
     }
 
     resolveExpression(node.indexExpression) ++
@@ -210,14 +229,19 @@ class CodeGenerator {
 
   private def resolveIfStatement(node: IfStatementNode): List[String] = {
     val startLabel = s"IF_TRUE$ifIndex"
-    val endLabel = s"IF_FALSE$ifIndex"
+    val elseLabel = s"IF_FALSE$ifIndex"
+    val endLabel = s"IF_END$ifIndex"
     ifIndex += 1
- 
+
     // TODO: Handle else branch.
     resolveExpression(node.condition) ++
-    List(s"if-goto $startLabel", s"goto $endLabel", s"label $startLabel") ++
-    generate(node.body) ++
-    List(s"label $endLabel")
+      List(s"if-goto $startLabel", s"goto $elseLabel", s"label $startLabel") ++
+      generate(node.body) ++
+      node.elseBody.fold(List())(_ => List(s"goto $endLabel")) ++
+      List(s"label $elseLabel") ++
+      node.elseBody.fold(List())(elseBody =>
+        generate(elseBody) ++ List(s"label $endLabel")
+      )
   }
 
   private def resolveParameterList(node: ParameterListNode): List[String] = {

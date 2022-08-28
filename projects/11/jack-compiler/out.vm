@@ -40,8 +40,20 @@ add
 push constant 1
 call Memory.poke 2
 pop temp 0
+goto IF_END1
 label IF_FALSE1
+push constant 8000
+push local 2
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+label IF_END1
+goto IF_END0
 label IF_FALSE0
+tbd 'false'
+pop local 3
+label IF_END0
 goto WHILE_EXP0
 label WHILE_END0
 push constant 0
@@ -55,7 +67,13 @@ goto IF_FALSE2
 label IF_TRUE2
 push constant 1
 return
+goto IF_END2
 label IF_FALSE2
+push argument 0
+push constant 2
+call Math.multiply 2
+return
+label IF_END2
 function Main.fillMemory 0
 label WHILE_EXP1
 push argument 1
