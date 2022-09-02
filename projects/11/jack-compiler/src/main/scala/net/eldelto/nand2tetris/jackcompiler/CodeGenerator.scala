@@ -62,11 +62,22 @@ class CodeGenerator {
         })
     }
 
+  private def resolveUnaryTermNode(node: UnaryTermNode): List[String] = {
+    val unaryOp = node.unaryOperation match {
+      case "-"           => List("neg")
+      case "~"           => List("not")
+      case op => List(s"tbd unary: $op")
+    }   
+
+    resolveTerm(node.body) ++ unaryOp
+  }
+
   private def resolveTerm(term: TermNode): List[String] = term match {
     case LiteralTermNode(literal)       => resolveLiteral(literal)
     case PriorityTermNode(expression)   => resolveExpression(expression)
     case IdentifierTermNode(identifier) => resolveIdentifier(identifier)
     case n: ArrayIdentifierTermNode     => resolveArrayIdentifier(n)
+    case n: UnaryTermNode => resolveUnaryTermNode(n)
     case GenericTermNode(children) =>
       generate(children) // TODO: Figure out what to do here.
   }
@@ -78,8 +89,6 @@ class CodeGenerator {
       case KeywordNode("null")        => List("push constant 0")
       case KeywordNode("false")       => List("push constant 0")
       case KeywordNode("true")        => List("push constant 0", "not")
-      case KeywordNode("-")           => List("neg")
-      case KeywordNode("~")           => List("not")
       case KeywordNode(value) =>
         List(s"tbd literal '$value'") // TODO: Handle different keywords.
     }
@@ -126,7 +135,9 @@ class CodeGenerator {
     case KeywordNode("<") => "lt"
     case KeywordNode(">") => "gt"
     case KeywordNode("=") => "eq"
-    case KeywordNode(k)   => s"tbd '$k'" // TODO: Handle other operations.
+    case KeywordNode("&") => "and"
+    case KeywordNode("|") => "or"
+    case KeywordNode(k)   => s"tbd ops '$k'" // TODO: Handle other operations.
   }
 
   private def infixToPostfixNotation(nodes: List[ASTNode]): List[ASTNode] = {
@@ -249,7 +260,7 @@ class CodeGenerator {
   }
 
   private def resolveParameterList(node: ParameterListNode): List[String] = {
-    node.variables.foreach(symbolTable.addSubroutineDeclaration(_))
+    node.variables.foreach(symbolTable.addArgumentDeclaration(_))
     List()
   }
 }

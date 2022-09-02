@@ -81,6 +81,7 @@ case class LiteralTermNode(literal: LiteralNode) extends TermNode
 case class IdentifierTermNode(identifier: String) extends TermNode
 case class ArrayIdentifierTermNode(identifier: String, index: ExpressionNode)
     extends TermNode
+case class UnaryTermNode(unaryOperation: String, body: TermNode) extends TermNode
 case class GenericTermNode(children: List[ASTNode]) extends TermNode
 
 trait Parser {
@@ -633,11 +634,7 @@ object Term extends SyntaxRule {
       ExpectToken(Symbol.RightBracket)
     ),
     // Unary term
-    Identifier,
-    Sequence(
-      UnaryOp,
-      Term
-    ),
+    UnaryTerm,
     // Priority term
     Sequence(
       ExpectToken(Symbol.LeftParen),
@@ -647,7 +644,8 @@ object Term extends SyntaxRule {
     // Literals
     ExpectType[IntConstant],
     ExpectType[StringConstant],
-    KeywordConstant
+    KeywordConstant,
+    Identifier,
   )
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
@@ -727,6 +725,22 @@ object ExpressionList extends SyntaxRule {
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
     rule.execute(parser).map { nodes =>
       ExpressionListNode(nodes).pure[List]
+    }
+  }
+}
+
+object UnaryTerm extends SyntaxRule {
+  private val rule = Sequence(
+    UnaryOp,
+    Term
+  )
+
+  override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
+    rule.execute(parser).map { nodes =>
+      val operation = nodes(0).asInstanceOf[KeywordNode].value
+      val body = nodes(1).asInstanceOf[TermNode]
+
+      UnaryTermNode(operation, body).pure[List]
     }
   }
 }
