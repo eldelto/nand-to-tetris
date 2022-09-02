@@ -76,8 +76,12 @@ class CodeGenerator {
       case IntegerConstantNode(value) => List(s"push constant $value")
       case StringConstantNode(value)  => resolveStringConstant(value)
       case KeywordNode("null")        => List("push constant 0")
+      case KeywordNode("false")       => List("push constant 0")
+      case KeywordNode("true")        => List("push constant 0", "not")
+      case KeywordNode("-")           => List("neg")
+      case KeywordNode("~")           => List("not")
       case KeywordNode(value) =>
-        List(s"tbd '$value'") // TODO: Handle different keywords.
+        List(s"tbd literal '$value'") // TODO: Handle different keywords.
     }
 
   private def resolveIdentifier(identifier: String): List[String] = {

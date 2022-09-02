@@ -58,7 +58,11 @@ case class ArrayLetStatementNode(
     indexExpression: ExpressionNode,
     expression: ExpressionNode
 ) extends ASTNode
-case class IfStatementNode(condition: ExpressionNode, body: StatementsNode, elseBody: Option[StatementsNode]) extends ASTNode
+case class IfStatementNode(
+    condition: ExpressionNode,
+    body: StatementsNode,
+    elseBody: Option[StatementsNode]
+) extends ASTNode
 case class WhileStatementNode(condition: ExpressionNode, body: StatementsNode)
     extends ASTNode
 case class SubroutineCallNode(
@@ -75,7 +79,8 @@ trait TermNode extends ASTNode
 case class PriorityTermNode(expression: ExpressionNode) extends TermNode
 case class LiteralTermNode(literal: LiteralNode) extends TermNode
 case class IdentifierTermNode(identifier: String) extends TermNode
-case class ArrayIdentifierTermNode(identifier: String, index: ExpressionNode) extends TermNode
+case class ArrayIdentifierTermNode(identifier: String, index: ExpressionNode)
+    extends TermNode
 case class GenericTermNode(children: List[ASTNode]) extends TermNode
 
 trait Parser {
@@ -379,12 +384,17 @@ object ParameterList extends SyntaxRule {
             val valueType = nodes(i) match {
               case n: IdentifierNode => n.value
               case n: KeywordNode    => n.value
-              case n => throw new IllegalStateException(s"Expected variable type but got: $n")
-            }         
+              case n =>
+                throw new IllegalStateException(
+                  s"Expected variable type but got: $n"
+                )
+            }
 
             val name = nodes(i + 1).asInstanceOf[IdentifierNode].value
             declarations = declarations
-              .appended(SingleVariableDec(name, valueType, VariableType.Argument))
+              .appended(
+                SingleVariableDec(name, valueType, VariableType.Argument)
+              )
 
             i = i + 3
             if (nodes.length <= i)
@@ -534,7 +544,9 @@ object IfStatement extends SyntaxRule {
     rule.execute(parser).map { nodes =>
       val condition = nodes(2).asInstanceOf[ExpressionNode]
       val body = nodes(5).asInstanceOf[StatementsNode]
-      val elseBody = if (nodes.length > 9) Some(nodes(9).asInstanceOf[StatementsNode]) else None
+      val elseBody =
+        if (nodes.length > 9) Some(nodes(9).asInstanceOf[StatementsNode])
+        else None
 
       IfStatementNode(condition, body, elseBody).pure[List]
     }
@@ -620,6 +632,12 @@ object Term extends SyntaxRule {
       Expression,
       ExpectToken(Symbol.RightBracket)
     ),
+    // Unary term
+    Identifier,
+    Sequence(
+      UnaryOp,
+      Term
+    ),
     // Priority term
     Sequence(
       ExpectToken(Symbol.LeftParen),
@@ -629,13 +647,7 @@ object Term extends SyntaxRule {
     // Literals
     ExpectType[IntConstant],
     ExpectType[StringConstant],
-    KeywordConstant,
-    // Unary term
-    Identifier,
-    Sequence(
-      UnaryOp,
-      Term
-    )
+    KeywordConstant
   )
 
   override def execute(parser: Parser): Either[Throwable, List[ASTNode]] = {
@@ -645,7 +657,8 @@ object Term extends SyntaxRule {
           PriorityTermNode(nodes(1).asInstanceOf[ExpressionNode])
         case n: (IntegerConstantNode | StringConstantNode | KeywordNode) =>
           LiteralTermNode(n)
-        case n: IdentifierNode if (nodes.length > 1 && nodes(1) == KeywordNode("[")) =>
+        case n: IdentifierNode
+            if (nodes.length > 1 && nodes(1) == KeywordNode("[")) =>
           val indexExpression = nodes(2).asInstanceOf[ExpressionNode]
           ArrayIdentifierTermNode(n.value, indexExpression)
         case n: IdentifierNode => IdentifierTermNode(n.value)
