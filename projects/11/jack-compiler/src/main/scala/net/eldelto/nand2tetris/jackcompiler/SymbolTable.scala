@@ -26,4 +26,6 @@ class SymbolTable {
     argumentTable.clear()
     subroutineTable.clear()
   }
+
+  def objectSize(): Int = classTable.size
 }

@@ -25,7 +25,7 @@ class CodeGenerator {
       case ClassNode(name, children) =>
         symbolTable.className = name
         generate(children)
-      case ClassVarDecNode(declarations, children) =>
+      case ClassVarDecNode(declarations) =>
         declarations.foreach(symbolTable.addClassDeclaration(_))
         List()
       case VarDecNode(declarations) =>
@@ -89,6 +89,7 @@ class CodeGenerator {
       case KeywordNode("null")        => List("push constant 0")
       case KeywordNode("false")       => List("push constant 0")
       case KeywordNode("true")        => List("push constant 0", "not")
+      case KeywordNode("this")        => List("push pointer 0")
       case KeywordNode(value) =>
         List(s"tbd literal '$value'") // TODO: Handle different keywords.
     }
@@ -98,7 +99,8 @@ class CodeGenerator {
     symbol.declaration.variableType match {
       case VariableType.Local    => List(s"push local ${symbol.index}")
       case VariableType.Argument => List(s"push argument ${symbol.index}")
-      case t                     => List(s"TBD: $t")
+      // case VariableType.Field => List(s"push argument ${symbol.index}")
+      case t                     => List(s"TBD resolveIdentifier: $t")
     }
   }
 
@@ -178,8 +180,13 @@ class CodeGenerator {
       case SubroutineType.Function =>
         List(
           s"function ${symbolTable.className}.${node.name} $localVariableCount"
-        ) ++
-          generate(node.body.children)
+        ) ++ generate(node.body.children)
+      case SubroutineType.Constructor =>
+        List(
+          s"function ${symbolTable.className}.${node.name} 0"
+        ) ++ 
+        List(s"push constant ${symbolTable.objectSize()}", "call Memory.alloc 1", "pop pointer 0") ++
+        generate(node.body.children)
       case value => List(s"$value TBD")
     }
   }
@@ -198,8 +205,15 @@ class CodeGenerator {
         node.parameters.children.count(_ == KeywordNode(",")) + 1
       else 0
 
+    val isMethodCall = !node.calleeName.contains(".")
+
+    val routineName = if (isMethodCall) symbolTable.className + "." + node.calleeName else node.calleeName
+    val routineParameterCount = if (isMethodCall) parameterCount + 1 else parameterCount
+    val preperationInstructions = if (isMethodCall) List("push pointer 0") else List()
+      
     generate(node.children) ++
-      List(s"call ${node.calleeName} ${parameterCount}")
+    preperationInstructions ++
+    List(s"call $routineName $routineParameterCount")
   }
 
   private def resolveLetStatement(node: LetStatementNode): List[String] = {
@@ -207,7 +221,8 @@ class CodeGenerator {
     val memorySegment = symbol.declaration.variableType match {
       case VariableType.Local    => List(s"pop local ${symbol.index}")
       case VariableType.Argument => List(s"pop argument ${symbol.index}")
-      case t                     => List(s"TBD: $t")
+      case VariableType.Field => List(s"pop this ${symbol.index}")
+      case t                     => List(s"TBD resolveLetStatement: $t")
     }
 
     generate(node.children) ++ memorySegment

@@ -36,10 +36,7 @@ case class StringConstantNode(value: String) extends LiteralNode
 case class KeywordNode(value: String) extends LiteralNode
 
 case class ClassNode(name: String, children: List[ASTNode]) extends ASTNode
-case class ClassVarDecNode(
-    declarations: List[SingleVariableDec],
-    children: List[ASTNode]
-) extends ASTNode
+case class ClassVarDecNode(declarations: List[SingleVariableDec]) extends ASTNode
 case class VarDecNode(declarations: List[SingleVariableDec]) extends ASTNode
 case class SubroutineDecNode(
     routineType: SubroutineType,
@@ -294,8 +291,8 @@ object ClassVarDec extends SyntaxRule {
     rule.execute(parser).map { nodes =>
       val variableTypeValue = nodes(0).asInstanceOf[KeywordNode].value
       val variableType = variableTypeValue match {
+        case Keyword.Field.value => VariableType.Field
         case Keyword.Static.value => VariableType.Static
-        case Keyword.Field.value  => VariableType.Field
       }
 
       val valueType = nodes(1) match {
@@ -304,11 +301,20 @@ object ClassVarDec extends SyntaxRule {
         case _ => throw new IllegalStateException("Unexpected node")
       }
 
-      // TODO: Handle multiple variable declarations in one statement.
-      val name = nodes(2).asInstanceOf[IdentifierNode].value
-      val declarations = List(SingleVariableDec(name, valueType, variableType))
+      var declarations: List[SingleVariableDec] = List()
+      var i = 2
+      breakable {
+        for (node <- nodes) {
+          val name = nodes(i).asInstanceOf[IdentifierNode].value
+          declarations = declarations
+            .appended(SingleVariableDec(name, valueType, variableType))
+          if (nodes(i + 1) == KeywordNode(";"))
+            break
+          i = i + 2
+        }
+      }
 
-      ClassVarDecNode(declarations, nodes).pure[List]
+      ClassVarDecNode(declarations).pure[List]
     }
   }
 }
