@@ -99,7 +99,7 @@ class CodeGenerator {
     symbol.declaration.variableType match {
       case VariableType.Local    => List(s"push local ${symbol.index}")
       case VariableType.Argument => List(s"push argument ${symbol.index}")
-      // case VariableType.Field => List(s"push argument ${symbol.index}")
+      case VariableType.Field    => List(s"push this ${symbol.index}")
       case t                     => List(s"TBD resolveIdentifier: $t")
     }
   }
@@ -187,7 +187,12 @@ class CodeGenerator {
         ) ++ 
         List(s"push constant ${symbolTable.objectSize()}", "call Memory.alloc 1", "pop pointer 0") ++
         generate(node.body.children)
-      case value => List(s"$value TBD")
+      case SubroutineType.Method =>
+        List(
+          s"function ${symbolTable.className}.${node.name} $localVariableCount",
+          "push argument 0",
+          "pop pointer 0",
+        ) ++ generate(node.body.children)
     }
   }
 
