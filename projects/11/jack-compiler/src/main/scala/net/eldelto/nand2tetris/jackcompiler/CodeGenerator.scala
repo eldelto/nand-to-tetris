@@ -210,15 +210,29 @@ class CodeGenerator {
         node.parameters.children.count(_ == KeywordNode(",")) + 1
       else 0
 
-    val isMethodCall = !node.calleeName.contains(".")
+    val isLocalMethodCall = !node.calleeName.contains(".")
 
-    val routineName = if (isMethodCall) symbolTable.className + "." + node.calleeName else node.calleeName
-    val routineParameterCount = if (isMethodCall) parameterCount + 1 else parameterCount
-    val preperationInstructions = if (isMethodCall) List("push pointer 0") else List()
+    val fullRoutineName = if (isLocalMethodCall) symbolTable.className + "." + node.calleeName else node.calleeName
+
+    val firstChar = fullRoutineName.head
+    val isForeignMethodCall = !(firstChar >= 'A' && firstChar <= 'Z')
+
+    val routineParameterCount = if (isLocalMethodCall || isForeignMethodCall) parameterCount + 1 else parameterCount
+    val preperationInstructions = if (isLocalMethodCall) List("push pointer 0")
+      else if (isForeignMethodCall) List("push this 0")
+      else List()
+      
+    val resolvedRoutineName = if (isLocalMethodCall || !isForeignMethodCall) {
+        fullRoutineName
+      } else {
+        val parts = fullRoutineName.split("\\.")
+        val variable = symbolTable.getSymbol(parts(0))
+        s"${variable.declaration.valueType}.${parts(1)}"
+      }
       
     generate(node.children) ++
     preperationInstructions ++
-    List(s"call $routineName $routineParameterCount")
+    List(s"call $resolvedRoutineName $routineParameterCount")
   }
 
   private def resolveLetStatement(node: LetStatementNode): List[String] = {

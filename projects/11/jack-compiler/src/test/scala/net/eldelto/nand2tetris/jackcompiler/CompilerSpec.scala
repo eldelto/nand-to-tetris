@@ -20,6 +20,7 @@ class CompilerSpec
       // ("ComplexArrays/Main.jack", "ComplexArrays/Main.vm"),
       ("ConvertToBin/Main.jack", "ConvertToBin/Main.vm"),
       ("Square/Square.jack", "Square/Square.vm"),
+      ("Square/SquareGame.jack", "Square/SquareGame.vm"),
     )
 
     forAll(testData) { (jackFile, expectedVmCode) =>
