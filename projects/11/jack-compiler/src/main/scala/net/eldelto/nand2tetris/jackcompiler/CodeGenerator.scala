@@ -174,7 +174,9 @@ class CodeGenerator {
       .map(_.asInstanceOf[VarDecNode].declarations.length)
       .sum
 
-    resolveParameterList(node.parameters)
+
+    val parameterOffset = if (node.routineType == SubroutineType.Method) 1 else 0
+    resolveParameterList(node.parameters, parameterOffset)
 
     node.routineType match {
       case SubroutineType.Function =>
@@ -232,8 +234,8 @@ class CodeGenerator {
         s"${variable.declaration.valueType}.$routineName"
       }
       
-    generate(node.children) ++
     preperationInstructions ++
+    generate(node.children) ++
     List(s"call $resolvedRoutineName $routineParameterCount")
   }
 
@@ -295,7 +297,8 @@ class CodeGenerator {
       )
   }
 
-  private def resolveParameterList(node: ParameterListNode): List[String] = {
+  private def resolveParameterList(node: ParameterListNode, offset: Int = 0): List[String] = {
+    symbolTable.setArgumentOffset(offset)
     node.variables.foreach(symbolTable.addArgumentDeclaration(_))
     List()
   }

@@ -9,12 +9,13 @@ class SymbolTable {
   private val classTable = HashMap[String, SymbolEntry]()
   private val argumentTable = HashMap[String, SymbolEntry]()
   private val subroutineTable = HashMap[String, SymbolEntry]()
+  private var argumentOffset = 0
 
   def addClassDeclaration(declaration: SingleVariableDec): Unit =
     classTable.put(declaration.name, SymbolEntry(declaration, classTable.size))
 
   def addArgumentDeclaration(declaration: SingleVariableDec): Unit = argumentTable
-    .put(declaration.name, SymbolEntry(declaration.copy(variableType = VariableType.Argument), argumentTable.size))
+    .put(declaration.name, SymbolEntry(declaration.copy(variableType = VariableType.Argument), argumentTable.size + argumentOffset))
 
   def addSubroutineDeclaration(declaration: SingleVariableDec): Unit = subroutineTable
     .put(declaration.name, SymbolEntry(declaration, subroutineTable.size))
@@ -25,7 +26,10 @@ class SymbolTable {
   def clearSubroutineTable(): Unit = {
     argumentTable.clear()
     subroutineTable.clear()
+    argumentOffset = 0
   }
 
   def objectSize(): Int = classTable.size
+
+  def setArgumentOffset(offset: Int) = argumentOffset = offset
 }
