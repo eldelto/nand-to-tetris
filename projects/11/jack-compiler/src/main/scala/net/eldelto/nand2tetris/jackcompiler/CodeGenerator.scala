@@ -25,9 +25,7 @@ class CodeGenerator {
       case ClassNode(name, children) =>
         symbolTable.className = name
         generate(children)
-      case ClassVarDecNode(declarations) =>
-        declarations.foreach(symbolTable.addClassDeclaration(_))
-        List()
+      case n: ClassVarDecNode => resolveClassVarDecNode(n)
       case VarDecNode(declarations) =>
         declarations.foreach(symbolTable.addSubroutineDeclaration(_))
         List()
@@ -100,7 +98,7 @@ class CodeGenerator {
       case VariableType.Local    => List(s"push local ${symbol.index}")
       case VariableType.Argument => List(s"push argument ${symbol.index}")
       case VariableType.Field    => List(s"push this ${symbol.index}")
-      case t                     => List(s"TBD resolveIdentifier: $t")
+      case VariableType.Static    => List(s"push static ${symbol.index}")
     }
   }
 
@@ -245,7 +243,7 @@ class CodeGenerator {
       case VariableType.Local    => List(s"pop local ${symbol.index}")
       case VariableType.Argument => List(s"pop argument ${symbol.index}")
       case VariableType.Field => List(s"pop this ${symbol.index}")
-      case t                     => List(s"TBD resolveLetStatement: $t")
+      case VariableType.Static => List(s"pop static ${symbol.index}")
     }
 
     generate(node.children) ++ memorySegment
@@ -300,6 +298,16 @@ class CodeGenerator {
   private def resolveParameterList(node: ParameterListNode, offset: Int = 0): List[String] = {
     symbolTable.setArgumentOffset(offset)
     node.variables.foreach(symbolTable.addArgumentDeclaration(_))
+    List()
+  }
+
+  private def resolveClassVarDecNode(node: ClassVarDecNode): List[String] = {
+    node.declarations.foreach(declaration =>
+      declaration.variableType match {
+        case VariableType.Static => symbolTable.addClassStaticDeclaration(declaration)
+        case _ => symbolTable.addClassDeclaration(declaration)
+      }
+    )
     List()
   }
 }

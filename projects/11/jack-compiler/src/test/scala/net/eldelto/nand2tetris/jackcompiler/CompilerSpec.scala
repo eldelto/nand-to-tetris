@@ -23,6 +23,9 @@ class CompilerSpec
       ("Square/SquareGame.jack", "Square/SquareGame.vm"),
       ("Square/Main.jack", "Square/Main.vm"),
       ("Pong/Ball.jack", "Pong/Ball.vm"),
+      ("Pong/Bat.jack", "Pong/Bat.vm"),
+      ("Pong/PongGame.jack", "Pong/PongGame.vm"),
+      ("Pong/Main.jack", "Pong/Main.vm"),
     )
 
     forAll(testData) { (jackFile, expectedVmCode) =>
