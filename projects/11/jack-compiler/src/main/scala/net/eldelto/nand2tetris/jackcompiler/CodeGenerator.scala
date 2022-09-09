@@ -213,21 +213,23 @@ class CodeGenerator {
     val isLocalMethodCall = !node.calleeName.contains(".")
 
     val fullRoutineName = if (isLocalMethodCall) symbolTable.className + "." + node.calleeName else node.calleeName
+    val parts = fullRoutineName.split("\\.")
+    val variableName = parts(0)
+    val routineName = parts(1)
 
     val firstChar = fullRoutineName.head
     val isForeignMethodCall = !(firstChar >= 'A' && firstChar <= 'Z')
 
     val routineParameterCount = if (isLocalMethodCall || isForeignMethodCall) parameterCount + 1 else parameterCount
     val preperationInstructions = if (isLocalMethodCall) List("push pointer 0")
-      else if (isForeignMethodCall) List("push this 0")
+      else if (isForeignMethodCall) resolveIdentifier(variableName)
       else List()
       
     val resolvedRoutineName = if (isLocalMethodCall || !isForeignMethodCall) {
         fullRoutineName
       } else {
-        val parts = fullRoutineName.split("\\.")
-        val variable = symbolTable.getSymbol(parts(0))
-        s"${variable.declaration.valueType}.${parts(1)}"
+        val variable = symbolTable.getSymbol(variableName)
+        s"${variable.declaration.valueType}.$routineName"
       }
       
     generate(node.children) ++
