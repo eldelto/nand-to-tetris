@@ -19,8 +19,10 @@ class Memory {
     function void init() {
         let memory = 0;
 	let freeList = 2048;
-	let freeList[0] = 16384-2048;
-	let freeList[1] = null;
+	let freeList[0] = 0;
+	let freeList[1] = freeList + 2;
+	let freeList[2] = 16384-2048;
+	let freeList[3] = null;
 
 	return;
     }
@@ -49,33 +51,41 @@ class Memory {
 	    let segmentLength = segment[0];
 	    let nextSegment = segment[1];
 
-	    if (segmentLength > size) {
-	    // TODO: Something's fishy here
-	       let nextSegment = Memory.newSegment(segment, size, previousSegment);
-	       let previousSegment[1] = nextSegment;
-	       return segment;
+            do Memory.poke(16000, segment);
+            do Memory.poke(16001, segment[0]);
+
+	    if ((segmentLength > size) | (segmentLength = size)) {
+	       return Memory.newSegment(segment, size, previousSegment, nextSegment);
 	    }
 	}
 
 	return -1;
     }
 
-    function int newSegment(Array startAddress, int size, Array previousSegment) {
-        var int endAddress;
-	let endAddress = startAddress + size + 1;
-	let startAddress[0] = size;
+    function int newSegment(Array startAddress, int size, Array previousSegment, Array nextSegment) {
+        var Array newSegmentAddress;
+	let newSegmentAddress = startAddress + size + 2;
+	let newSegmentAddress[0] = startAddress[0] - (size + 1);
 
+	let startAddress[0] = size;
+	
 	if (~(previousSegment = null)) {
-	   let previousSegment[1] = endAddress + 1;
+	    let previousSegment[1] = newSegmentAddress;
 	}
 
-	return endAddress;
+	if (~(nextSegment = null)) {
+	    let newSegmentAddress[1] = nextSegment;
+	}
+
+	return startAddress + 1;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array object) {
     	var Array segment, nextSegment;
+	let object = object - 1;
+	let object[0] = object[0] - 1;
 
 	let nextSegment = freeList;
 	while (~(nextSegment = null)) {

@@ -6,6 +6,24 @@ pop static 1
 push constant 0
 push static 1
 add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 1
+push static 1
+add
+push static 1
+push constant 2
+add
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 2
+push static 1
+add
 push constant 16384
 push constant 2048
 sub
@@ -13,7 +31,7 @@ pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
-push constant 1
+push constant 3
 push static 1
 add
 push constant 0
@@ -67,18 +85,33 @@ add
 pop pointer 1
 push that 0
 pop local 1
+push constant 16000
+push local 0
+call Memory.poke 2
+pop temp 0
+push constant 16001
+push constant 0
+push local 0
+add
+pop pointer 1
+push that 0
+call Memory.poke 2
+pop temp 0
 push local 3
 push argument 0
 gt
+push local 3
+push argument 0
+eq
+or
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
 push local 0
 push argument 0
 push local 2
-call Memory.newSegment 3
-pop local 1
 push local 1
+call Memory.newSegment 4
 return
 label IF_FALSE0
 goto WHILE_EXP0
@@ -90,9 +123,25 @@ function Memory.newSegment 1
 push argument 0
 push argument 1
 add
-push constant 1
+push constant 2
 add
 pop local 0
+push constant 0
+push local 0
+add
+push constant 0
+push argument 0
+add
+pop pointer 1
+push that 0
+push argument 1
+push constant 1
+add
+sub
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push constant 0
 push argument 0
 add
@@ -112,16 +161,50 @@ push constant 1
 push argument 2
 add
 push local 0
-push constant 1
-add
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 label IF_FALSE0
+push argument 3
+push constant 0
+eq
+not
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push constant 1
 push local 0
+add
+push argument 3
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+label IF_FALSE1
+push argument 0
+push constant 1
+add
 return
 function Memory.deAlloc 2
+push argument 0
+push constant 1
+sub
+pop argument 0
+push constant 0
+push argument 0
+add
+push constant 0
+push argument 0
+add
+pop pointer 1
+push that 0
+push constant 1
+sub
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push static 1
 pop local 1
 label WHILE_EXP0
