@@ -1,0 +1,93 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+
+    static Array memory;
+
+    // The length is stored at offset 0. Offset 1 stores a pointer to the next segment.
+    static Array freeList;
+
+    /** Initializes the class. */
+    function void init() {
+        let memory = 0;
+	let freeList = 2048;
+	let freeList[0] = 16384-2048;
+	let freeList[1] = null;
+
+	return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return memory[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let memory[address] = value;
+	return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+        var Array segment, nextSegment, previousSegment;
+	var int segmentLength;
+
+	let nextSegment = freeList;
+	while (~(nextSegment = null)) {
+	    let previousSegment = segment;
+	    let segment = nextSegment;
+	    let segmentLength = segment[0];
+	    let nextSegment = segment[1];
+
+	    if (segmentLength > size) {
+	       let nextSegment = Memory.newSegment(segment, size, previousSegment);
+	       return nextSegment;
+	    }
+	}
+
+	return -1;
+    }
+
+    function int newSegment(Array startAddress, int size, Array previousSegment) {
+        var int endAddress;
+	let endAddress = startAddress + size + 1;
+	let startAddress[0] = size;
+
+	if (~(previousSegment = null)) {
+	   let previousSegment[1] = endAddress + 1;
+	}
+
+	return endAddress;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array object) {
+    	var Array segment, nextSegment;
+
+	let nextSegment = freeList;
+	while (~(nextSegment = null)) {
+	    let segment = nextSegment;
+	    let nextSegment = segment[1];
+
+	    if (segment > object) {
+	       let object[1] = nextSegment;
+	       let segment[1] = object;
+
+	       return;
+	    }
+	}
+	
+        return;
+    }    
+}
