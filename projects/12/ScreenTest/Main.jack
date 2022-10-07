@@ -13,10 +13,10 @@ class Main {
         do Screen.drawLine(100,100,200,0);        // base line
         do Screen.drawLine(100,100,0,200);        // base line
         do Screen.drawLine(100,100,0,0);        // base line
-        do Screen.drawLine(100,100,100,0);        // base line
+        do Screen.drawLine(100,100,200,100);        // base line
+        do Screen.drawLine(100,100,100,200);        // base line
         do Screen.drawLine(100,100,0,100);        // base line
-        do Screen.drawLine(100,100,0,0);        // base line
-        do Screen.drawLine(100,100,100,100);        // base line
+        do Screen.drawLine(100,100,100,0);        // base line
 
         return;
     }
