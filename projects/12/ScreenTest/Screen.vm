@@ -57,11 +57,24 @@ push argument 0
 push argument 1
 call Screen.getByteForPixel 2
 pop local 2
+push static 0
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
 push local 2
 call Memory.peek 1
 push local 1
 or
 pop local 0
+goto IF_END0
+label IF_FALSE0
+push local 2
+call Memory.peek 1
+push local 1
+not
+and
+pop local 0
+label IF_END0
 push local 2
 push local 0
 call Memory.poke 2
@@ -277,9 +290,66 @@ goto WHILE_EXP0
 label WHILE_END0
 push constant 0
 return
-function Screen.drawRectangle 0
+function Screen.drawRectangle 1
+push argument 1
+pop local 0
+label WHILE_EXP0
+push local 0
+push argument 3
+gt
+not
+not
+if-goto WHILE_END0
+push argument 0
+push argument 2
+push local 0
+call Screen.drawHorizontalLine 3
+pop temp 0
+push local 0
+push constant 1
+add
+pop local 0
+goto WHILE_EXP0
+label WHILE_END0
 push constant 0
 return
-function Screen.drawCircle 0
+function Screen.drawCircle 3
+push argument 2
+neg
+pop local 1
+push argument 2
+push argument 2
+call Math.multiply 2
+pop local 2
+label WHILE_EXP0
+push local 1
+push argument 2
+lt
+not
+if-goto WHILE_END0
+push local 2
+push local 1
+push local 1
+call Math.multiply 2
+sub
+call Math.sqrt 1
+pop local 0
+push argument 0
+push local 0
+sub
+push argument 0
+push local 0
+add
+push argument 1
+push local 1
+add
+call Screen.drawHorizontalLine 3
+pop temp 0
+push local 1
+push constant 1
+add
+pop local 1
+goto WHILE_EXP0
+label WHILE_END0
 push constant 0
 return

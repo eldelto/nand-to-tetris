@@ -53,7 +53,12 @@ class Screen {
 	
         let mask = Math.powerOfTwo(x & 15);
 	let adr = Screen.getByteForPixel(x, y);
-	let value = Memory.peek(adr) | mask;
+
+	if (color) {
+	    let value = Memory.peek(adr) | mask;
+	} else {
+	    let value = Memory.peek(adr) & ~(mask);
+	}
 	do Memory.poke(adr, value);
 
 	return;
@@ -132,11 +137,31 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int y;
+        let y = y1;
+	
+        while (~(y > y2)) {
+            do Screen.drawHorizontalLine(x1, x2, y);
+            let y = y + 1;
+        }
+
         return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+        var int dx, dy;
+        var int rSquared;
+        
+        let dy = -r;
+        let rSquared = r*r;
+	
+        while (dy < r) {
+            let dx = Math.sqrt(rSquared - (dy * dy));
+            do Screen.drawHorizontalLine(x - dx, x + dx, y + dy);
+            let dy = dy + 1;
+        }
+
         return;
     }
 }
